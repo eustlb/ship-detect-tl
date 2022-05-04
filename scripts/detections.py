@@ -16,7 +16,7 @@ detection_model = model_builder.build(model_config=configs['model'], is_training
 
 # Restore checkpoint
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
-ckpt.restore(os.path.join('/tf/custom_models/ckpt-13')).expect_partial()
+ckpt.restore(os.path.join('/tf/custom_models/efficientdet_d2_coco17_tpu-32/ckpt-4')).expect_partial()
 
 @tf.function
 def detect_fn(image):
@@ -25,11 +25,11 @@ def detect_fn(image):
     detections = detection_model.postprocess(prediction_dict, shapes)
     return detections
 
-category_index = label_map_util.create_category_index_from_labelmap('/tf/archive/annotations/label_map.txt')
+category_index = label_map_util.create_category_index_from_labelmap('/tf/ship_detect_tl/data/label_map.txt')
 
-for image_name in os.listdir('/tf/archive/test'):
+for image_name in os.listdir('/tf/ship_detect_tl/scripts/test'):
 
-    img = cv2.imread('/tf/archive/test/'+image_name)
+    img = cv2.imread('/tf/ship_detect_tl/scripts/test/'+image_name)
     image_np = np.array(img)
 
     input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
@@ -58,7 +58,7 @@ for image_name in os.listdir('/tf/archive/test'):
                 agnostic_mode=False)
 
     im = Image.fromarray(cv2.cvtColor(image_np_with_detections, cv2.COLOR_BGR2RGB))
-    im.save('/tf/archive/predictions/'+image_name)
+    im.save('/tf/ship_detect_tl/predictions/'+image_name)
 
 # plt.imshow(cv2.cvtColor(image_np_with_detections, cv2.COLOR_BGR2RGB))
 # plt.savefig('/tf/archive/test.png')

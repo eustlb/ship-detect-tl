@@ -2,7 +2,6 @@ import tensorflow as tf
 print(tf.config.list_physical_devices('GPU'))
 import os
 from tensorflow.python.keras.utils.data_utils import get_file
-#import cv2
 
 class Model:
     def __init__(self):
