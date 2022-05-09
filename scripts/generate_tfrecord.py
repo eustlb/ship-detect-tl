@@ -70,6 +70,14 @@ def generate_tf_record(path_images, path_to_csv, nb_images, cut_rate, boat_rate,
     boat_rate : pourcentage du nombre total d'images qui doit contenir au moins un bateau
     tfrecord_dir : répertoire où seront créés les tf records
     """
+
+    if not os.path.exists(tfrecord_dir):
+        os.mkdir(tfrecord_dir)
+
+    if os.path.exists(os.path.join(tfrecord_dir,'train_'+str(nb_images)+'_'+str(int(boat_rate*100))+'_'+str(int(cut_rate*100))+'.tfrecord')):
+        print('Les tfrecords demandés sont déjà présents au chemin suivant :'+str(tfrecord_dir))
+        return 
+
     # 1. créer deux dataframes df_train et df_test selon les paramètres : cut rate, boat_rate, nb_images
 
     df = pd.read_csv(path_to_csv)
