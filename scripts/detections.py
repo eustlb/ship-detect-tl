@@ -11,12 +11,12 @@ from PIL import Image, ImageDraw
 
 
 # Load pipeline config and build a detection model
-configs = config_util.get_configs_from_pipeline_file('/tf/pretrained_models/checkpoints/efficientdet_d2_coco17_tpu-32/pipeline.config')
+configs = config_util.get_configs_from_pipeline_file('/tf/pretrained_models/checkpoints/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/pipeline.config')
 detection_model = model_builder.build(model_config=configs['model'], is_training=False)
 
 # Restore checkpoint
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
-ckpt.restore(os.path.join('/tf/custom_models/efficientdet_d2_coco17_tpu-32/ckpt-4')).expect_partial()
+ckpt.restore(os.path.join('/tf/custom_models/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/ckpt-10')).expect_partial()
 
 @tf.function
 def detect_fn(image):
@@ -27,9 +27,9 @@ def detect_fn(image):
 
 category_index = label_map_util.create_category_index_from_labelmap('/tf/ship_detect_tl/data/label_map.txt')
 
-for image_name in os.listdir('/tf/ship_detect_tl/scripts/test'):
+for image_name in os.listdir('/tf/ship_data/train_v2')[-5:]:
 
-    img = cv2.imread('/tf/ship_detect_tl/scripts/test/'+image_name)
+    img = cv2.imread('/tf/ship_data/train_v2/'+image_name)
     image_np = np.array(img)
 
     input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
@@ -42,6 +42,8 @@ for image_name in os.listdir('/tf/ship_detect_tl/scripts/test'):
 
     # detection_classes should be ints.
     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+
+    print(detections)
 
     label_id_offset = 1
     image_np_with_detections = image_np.copy()
@@ -57,8 +59,10 @@ for image_name in os.listdir('/tf/ship_detect_tl/scripts/test'):
                 min_score_thresh=.5,
                 agnostic_mode=False)
 
+                
+
     im = Image.fromarray(cv2.cvtColor(image_np_with_detections, cv2.COLOR_BGR2RGB))
-    im.save('/tf/ship_detect_tl/predictions/'+image_name)
+    im.save('/tf/predictions/'+image_name)
 
 # plt.imshow(cv2.cvtColor(image_np_with_detections, cv2.COLOR_BGR2RGB))
 # plt.savefig('/tf/archive/test.png')

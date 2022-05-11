@@ -5,6 +5,7 @@ import io
 from PIL import Image
 from tqdm import tqdm
 from object_detection.utils import dataset_util
+import random
 
 def class_text_to_int(row_label):
     if row_label == 'ship':
@@ -59,17 +60,19 @@ def create_tf_example(file_name, path_to_images, labels_df):
     }))
     return tf_example
 
-def generate_tf_record(path_images, path_to_csv, nb_images, cut_rate, boat_rate, tfrecord_dir):
+def generate_tf_record(path_images, path_to_csv, image_rate, cut_rate, boat_rate, tfrecord_dir):
     """
     Génère deux fichiers au format tfrecord dans le répertoire tfrecord_dir : deux fichiers train et test 
     nommés selon train_1000_80_70.tfrecord pour 1000 images, 80% d'images avec bateau réparties 70% dans train.
     path_images : répertoire où sont stockées les images
     path_to_csv : chemin vers le csv qui doit être au format Pascal VOC
-    nb_images : nombre total d'images
+    image_rate : pourcentage de la base de départ. Pour image_rate=1, on aura donc au plus 42556 images avec bateau (nombre maximum disponible dans la base)
     cut_rate : pourcentage d'images utilisées pour formerle tfrecord train. Le tfrecord test sera sont formé avec les images restantes
     boat_rate : pourcentage du nombre total d'images qui doit contenir au moins un bateau
     tfrecord_dir : répertoire où seront créés les tf records
     """
+
+    nb_images = int(42556*image_rate)
 
     if not os.path.exists(tfrecord_dir):
         os.mkdir(tfrecord_dir)
@@ -88,30 +91,42 @@ def generate_tf_record(path_images, path_to_csv, nb_images, cut_rate, boat_rate,
     df_train = pd.DataFrame(columns=df.columns.tolist())
     df_test = pd.DataFrame(columns=df.columns.tolist())
 
+    l_train = []
+    l_test = []
+
     i, j = 0, 0
     print('Création des dataframes train et test...')
-    for image_name in tqdm(df_ship['filename'].unique()[:int(nb_images*boat_rate)]):
+    for image_name in df_ship['filename'].unique()[:int(nb_images*boat_rate)]:
         if i < int(cut_rate*int(nb_images*boat_rate)):
-            image_df = df_ship[df_ship.filename == image_name]
-            df_train = pd.concat([df_train,image_df], ignore_index = True)
+            l_train.append(image_name)
             i+=1
         else :
-            image_df = df_ship[df_ship.filename == image_name]
-            df_test = pd.concat([df_test,image_df], ignore_index = True)
+            l_test.append(image_name)
 
-    for image_name in tqdm(df_no_ship['filename'].unique()[:nb_images-int(nb_images*boat_rate)]):
+    for image_name in df_no_ship['filename'].unique()[:nb_images-int(nb_images*boat_rate)]:
         if j < int(cut_rate*(nb_images-int(nb_images*boat_rate))):
-            image_df = df_no_ship[df_no_ship.filename == image_name]
-            df_train = pd.concat([df_train,image_df], ignore_index = True)
+            l_train.append(image_name)
             j+=1
         else :
-            image_df = df_no_ship[df_no_ship.filename == image_name]
-            df_test = pd.concat([df_test,image_df], ignore_index = True)
+            l_test.append(image_name)
+
+    random.shuffle(l_train)
+    random.shuffle(l_test)
+    
+    for image_name in tqdm(l_train):
+        image_df = df[df.filename == image_name]
+        df_train = pd.concat([df_train,image_df], ignore_index = True)
+    for image_name in tqdm(l_test):
+        image_df = df[df.filename == image_name]
+        df_test = pd.concat([df_test,image_df], ignore_index = True)
+    
+    df_test.to_csv('/tf/train.csv', index=False)
+    df_test.to_csv('/tf/test.csv', index=False)
 
     # utiliser ce deux dataframes pour créer train.tfrecord et test.tfrecord à l'emplacement tfrecord_dir
     # tfrecord train
 
-    filename_train = 'train_'+str(nb_images)+'_'+str(int(boat_rate*100))+'_'+str(int(cut_rate*100))+'.tfrecord'
+    filename_train = 'train_'+str(int(image_rate*100))+'_'+str(int(boat_rate*100))+'_'+str(int(cut_rate*100))+'.tfrecord'
 
     writer_train = tf.io.TFRecordWriter(os.path.join(tfrecord_dir,filename_train))
     list_images_names_train = df_train['filename'].unique()
@@ -125,7 +140,7 @@ def generate_tf_record(path_images, path_to_csv, nb_images, cut_rate, boat_rate,
 
     # tfrecord test
 
-    filename_test = 'test_'+str(nb_images)+'_'+str(int(boat_rate*100))+'_'+str(int(cut_rate*100))+'.tfrecord'
+    filename_test = 'test_'+str(int(image_rate*100))+'_'+str(int(boat_rate*100))+'_'+str(int(cut_rate*100))+'.tfrecord'
 
     writer_test = tf.io.TFRecordWriter(os.path.join(tfrecord_dir,filename_test))
     list_images_names_test = df_test['filename'].unique()
