@@ -109,6 +109,8 @@ def generate_tf_record(path_images, path_to_csv, image_rate, cut_rate, boat_rate
             j+=1
         else :
             l_test.append(image_name)
+        
+    print(l_train == l_test)
 
     random.shuffle(l_train)
     random.shuffle(l_test)
@@ -120,7 +122,7 @@ def generate_tf_record(path_images, path_to_csv, image_rate, cut_rate, boat_rate
         image_df = df[df.filename == image_name]
         df_test = pd.concat([df_test,image_df], ignore_index = True)
     
-    df_test.to_csv('/tf/train.csv', index=False)
+    df_train.to_csv('/tf/train.csv', index=False)
     df_test.to_csv('/tf/test.csv', index=False)
 
     # utiliser ce deux dataframes pour créer train.tfrecord et test.tfrecord à l'emplacement tfrecord_dir
