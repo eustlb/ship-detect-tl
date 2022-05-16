@@ -1,4 +1,5 @@
 import os
+from charset_normalizer import detect
 import tensorflow as tf
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as viz_utils
@@ -6,8 +7,10 @@ from object_detection.builders import model_builder
 from object_detection.utils import config_util
 import cv2 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image, ImageDraw
+from tqdm import tqdm
 
 
 # Load pipeline config and build a detection model
@@ -16,7 +19,7 @@ detection_model = model_builder.build(model_config=configs['model'], is_training
 
 # Restore checkpoint
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
-ckpt.restore(os.path.join('/tf/custom_models/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/ckpt-10')).expect_partial()
+ckpt.restore(os.path.join('/tf/custom_models/faster_rcnn_300000/ckpt-601')).expect_partial()
 
 @tf.function
 def detect_fn(image):
@@ -27,10 +30,11 @@ def detect_fn(image):
 
 category_index = label_map_util.create_category_index_from_labelmap('/tf/ship_detect_tl/data/label_map.txt')
 
-for image_name in os.listdir('/tf/ship_data/train_v2')[-5:]:
+for image_name in tqdm(os.listdir('/tf/ship_data/train_v2')[-100:]):
 
     img = cv2.imread('/tf/ship_data/train_v2/'+image_name)
     image_np = np.array(img)
+
 
     input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
     detections = detect_fn(input_tensor)
@@ -43,11 +47,44 @@ for image_name in os.listdir('/tf/ship_data/train_v2')[-5:]:
     # detection_classes should be ints.
     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
 
-    print(detections)
-
     label_id_offset = 1
     image_np_with_detections = image_np.copy()
 
+    # truth image
+    image_truth = image_np.copy()
+    labels_df = pd.read_csv('/tf/ship_data/train_ship_segmentations_OD.csv')
+    width, height = 768, 768
+
+    xmins = []
+    xmaxs = []
+    ymins = []
+    ymaxs = []
+
+    detections_bbox = []
+    detections_scores = np.array([])
+    detections_classes = np.array([])
+
+    df = labels_df.loc[labels_df['filename'] == image_name]
+
+    for index, row in df.iterrows():
+        xmins.append(row['xmin'] / width)
+        xmaxs.append(row['xmax'] / width)
+        ymins.append(row['ymin'] / height)
+        ymaxs.append(row['ymax'] / height)
+
+    for i in range(len(xmaxs)):
+        l = [ymaxs[i],xmins[i],ymins[i],xmaxs[i]]
+        detections_bbox.append(l)
+        detections_scores = np.append(detections_scores, 1)
+        detections_classes = np.append(detections_classes, 0)
+    
+    detections_bbox = np.array(detections_bbox)
+
+
+    # detection_classes should be ints.
+    detections_classes = detections_classes.astype(np.int64)
+    
+    # draw predicted boxes on image
     viz_utils.visualize_boxes_and_labels_on_image_array(
                 image_np_with_detections,
                 detections['detection_boxes'],
@@ -59,9 +96,24 @@ for image_name in os.listdir('/tf/ship_data/train_v2')[-5:]:
                 min_score_thresh=.5,
                 agnostic_mode=False)
 
-                
+    #draw predicted boxes on second image
+    viz_utils.visualize_boxes_and_labels_on_image_array(
+                image_truth,
+                detections_bbox,
+                detections_classes+label_id_offset,
+                detections_scores,
+                category_index,
+                use_normalized_coordinates=True,
+                max_boxes_to_draw=5,
+                min_score_thresh=.5,
+                agnostic_mode=False)
 
-    im = Image.fromarray(cv2.cvtColor(image_np_with_detections, cv2.COLOR_BGR2RGB))
+    image_predicted = cv2.cvtColor(image_np_with_detections, cv2.COLOR_BGR2RGB)
+    image_truth = cv2.cvtColor(image_truth, cv2.COLOR_BGR2RGB)
+    
+    vis = np.concatenate((image_predicted, image_truth), axis=1)
+       
+    im = Image.fromarray(vis)
     im.save('/tf/predictions/'+image_name)
 
 # plt.imshow(cv2.cvtColor(image_np_with_detections, cv2.COLOR_BGR2RGB))
