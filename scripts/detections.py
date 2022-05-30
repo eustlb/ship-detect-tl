@@ -19,7 +19,7 @@ detection_model = model_builder.build(model_config=configs['model'], is_training
 
 # Restore checkpoint
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
-ckpt.restore(os.path.join('/tf/custom_models/faster_rcnn_300000/ckpt-601')).expect_partial()
+ckpt.restore(os.path.join('/tf/custom_models/faster_rcnn_50000/ckpt-101')).expect_partial()
 
 @tf.function
 def detect_fn(image):
@@ -30,7 +30,7 @@ def detect_fn(image):
 
 category_index = label_map_util.create_category_index_from_labelmap('/tf/ship_detect_tl/data/label_map.txt')
 
-for image_name in tqdm(os.listdir('/tf/ship_data/train_v2')[-100:]):
+for image_name in tqdm(os.listdir('/tf/ship_data/train_v2')[-1000:]):
 
     img = cv2.imread('/tf/ship_data/train_v2/'+image_name)
     image_np = np.array(img)
@@ -92,7 +92,7 @@ for image_name in tqdm(os.listdir('/tf/ship_data/train_v2')[-100:]):
                 detections['detection_scores'],
                 category_index,
                 use_normalized_coordinates=True,
-                max_boxes_to_draw=5,
+                max_boxes_to_draw=20,
                 min_score_thresh=.5,
                 agnostic_mode=False)
 
@@ -104,7 +104,7 @@ for image_name in tqdm(os.listdir('/tf/ship_data/train_v2')[-100:]):
                 detections_scores,
                 category_index,
                 use_normalized_coordinates=True,
-                max_boxes_to_draw=5,
+                max_boxes_to_draw=20,
                 min_score_thresh=.5,
                 agnostic_mode=False)
 
