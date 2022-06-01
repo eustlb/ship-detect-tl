@@ -18,5 +18,6 @@ def download_model(model_url, models_dir):
     get_file(fname=file_name, origin=model_url, cache_subdir='checkpoints', cache_dir=models_dir, extract=True)
 
     os.makedirs(os.path.join(working_dir,'custom_models',model_name), exist_ok=True)
-    # shutil.copyfile(os.path.join(models_dir,'checkpoints',model_name,'pipeline.config'), os.path.join(working_dir,'custom_models',model_name,'pipeline.config'))
+    os.makedirs(os.path.join(working_dir,'custom_models',model_name,'checkpoint'), exist_ok=True)
+    shutil.copyfile(os.path.join(models_dir,'checkpoints',model_name,'pipeline.config'), os.path.join(working_dir,'custom_models',model_name,'pipeline.config'))
 
