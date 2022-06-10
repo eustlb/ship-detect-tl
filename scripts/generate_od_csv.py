@@ -34,9 +34,13 @@ def rle2bbox(rle, shape):
     return x0, y0, x1, y1
 
 def generate_od_csv(path_original_csv, path_new_csv):
-    '''
+    """
     Generates a new csv according to Tensorflow object detection format (Pascal VOC) from a dataframe build according to the structure of the original CSV (from kaggle dataset)
-    '''
+
+    :param path_to_original_csv: str, path du csv de départ fourni par kaggle, où la position des bateaux est codée au format RLE.
+    :param path_new_csv: str, path du nouveau csv que l'on souhaite créer.
+    :return: Void.
+    """
 
     df = pd.read_csv(path_original_csv)
     H = 768

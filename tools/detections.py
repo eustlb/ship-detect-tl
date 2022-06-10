@@ -14,12 +14,12 @@ from tqdm import tqdm
 
 
 # Load pipeline config and build a detection model
-configs = config_util.get_configs_from_pipeline_file('/tf/pretrained_models/checkpoints/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/pipeline.config')
+configs = config_util.get_configs_from_pipeline_file('/tf/custom_models/faster_rcnn_resnet101_v1_1024x1024_coco17_tpu-8/pipeline.config')
 detection_model = model_builder.build(model_config=configs['model'], is_training=False)
 
 # Restore checkpoint
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
-ckpt.restore(os.path.join('/tf/custom_models/faster_rcnn_50000/ckpt-101')).expect_partial()
+ckpt.restore(os.path.join('/tf/custom_models/faster_rcnn_resnet101_v1_1024x1024_coco17_tpu-8/checkpoint/ckpt-101')).expect_partial()
 
 @tf.function
 def detect_fn(image):
@@ -29,8 +29,11 @@ def detect_fn(image):
     return detections
 
 category_index = label_map_util.create_category_index_from_labelmap('/tf/ship_detect_tl/data/label_map.txt')
+diff_images_list = ['0c939e612.jpg','0d136fde3.jpg','1dfce9923.jpg','1feb020df.jpg','fb2df7e9b.jpg','f427269bf.jpg','f221ea400.jpg','f72d6ba13.jpg','f47e91719.jpg','dd22f309e.jpg','d85469648.jpg','d482d562b.jpg','0b22c4092.jpg']
 
-for image_name in tqdm(os.listdir('/tf/ship_data/train_v2')[-1000:]):
+# for image_name in tqdm(os.listdir('/tf/ship_data/train_v2')[-1000:]):
+# for image_name in tqdm(diff_images_list):
+for image_name in tqdm(pd.read_csv('/tf/ship_data/annotations/100_80_90/test_100_80_90.csv')['filename'].unique()[:100]):
 
     img = cv2.imread('/tf/ship_data/train_v2/'+image_name)
     image_np = np.array(img)

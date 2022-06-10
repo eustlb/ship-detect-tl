@@ -2,8 +2,16 @@ import os
 from tensorflow.python.keras.utils.data_utils import get_file
 import shutil
 
-
 def download_model(model_url, models_dir):
+    """
+    Télécharge le modèle choisi sur le tensorflow model zoo, le place dans le répertoire models_dir choisi et crée un répertoire 'custom_models/'
+    contenant lui-même le fichier config du modèle et un sous_répertoire 'checkpoints/'. C'est ce répertoire qui sera en jeu lors de l'entrainement 
+    et pour l'enregistrement des checkpoints. Le répertoire models_dir choisi est simplement un lieu de 'stockage' du modèle générique téléchargé.
+
+    :param model_url: str, lien vers le modèle choisi du tensorflow model zoo.
+    :param models_dir: str, répertoire où l'on souhaite que le modèle soit téléchargé. 
+    :return: Void.
+    """
 
     working_dir = os.path.dirname(models_dir)
 
