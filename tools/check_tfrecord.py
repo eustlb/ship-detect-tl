@@ -20,5 +20,5 @@ def check_tfrecord(tfrecord_path):
                 print(feature)
 
 if __name__=='__main__':
-    tfrecord_path = '/tf/annotations/test_13250_90_70.tfrecord'
+    tfrecord_path = '/tf/ship_data/annotations/100_80_90/train_100_80_90.tfrecord'
     check_tfrecord(tfrecord_path)

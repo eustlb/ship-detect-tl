@@ -2,6 +2,7 @@ import os
 import cv2 
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 from object_detection.builders import model_builder
 from object_detection.utils import config_util
 from PIL import Image, ImageDraw, ImageFont
@@ -10,14 +11,14 @@ from tqdm import tqdm
 
 def save_image_bbox(img_path, saving_path, bboxs, scores):
     """
-    Dessine sur une image des bboxs avec leurs scores.
-
+    Dessine sur une image des bboxs avec leurs scores et place à droite de cette image l'image avec les bboxs véritables (annotations de départ).
     :param img_path: str, path de l'image à éditer
     :param saving_path: str, path où sera enregistrée l'image 
     :param bboxs: list, liste de bboxs au format [[ymin, xmin, ymax, xmax]]
     :param scores: list, liste des scores au format [0.8]
     :return: Void.
     """
+    # Placing the bboxs and scores on the image
     image = Image.open(img_path)
     h, w = image.size
     draw = ImageDraw.Draw(image)
@@ -33,7 +34,45 @@ def save_image_bbox(img_path, saving_path, bboxs, scores):
         height = font.getsize(text)[1]
         draw.rectangle([x0,y0,x1,y1], outline='#20d200')
         draw.text((x0,y0-height-3), text, font = font, fill=(32, 210, 0))
-    image.save(saving_path, "PNG")
+
+    # Do the same with truth image
+    image_truth = Image.open(img_path)
+    h, w = image.size
+    draw_truth = ImageDraw.Draw(image_truth)
+
+    labels_df = pd.read_csv('/tf/ship_data/train_ship_segmentations_OD.csv')
+
+    detections_bboxs = []
+    detections_scores = []
+
+    image_name = os.path.basename(img_path)
+    df = labels_df.loc[labels_df['filename'] == image_name]
+
+    for index, row in df.iterrows():
+        l = [row['ymin']/h, row['xmin']/w, row['ymax']/h, row['xmax']/w]
+        detections_bboxs.append(l)
+        detections_scores.append(1.)
+
+    for i in range(len(detections_bboxs)) :
+        x0 = detections_bboxs[i][1]*w
+        y0 = detections_bboxs[i][0]*h
+        x1 = detections_bboxs[i][3]*w
+        y1 = detections_bboxs[i][2]*h
+        font_file = "/usr/local/share/fonts/bebas_neue/BebasNeue-Regular.ttf"
+        font_size = 12
+        font = ImageFont.truetype(font_file, font_size)
+        text = str(round(detections_scores[i]*100))+'%'
+        height = font.getsize(text)[1]
+        draw_truth.rectangle([x0,y0,x1,y1], outline='#20d200')
+        draw_truth.text((x0,y0-height-3), text, font = font, fill=(32, 210, 0))
+
+    # concatenate the two images
+    dst = Image.new('RGB', (image.width + image_truth.width, image.height))
+    dst.paste(image, (0, 0))
+    dst.paste(image_truth, (image.width, 0))
+
+    # save the result
+    dst.save(saving_path, "PNG")
 
 def predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir):
     """
@@ -79,6 +118,7 @@ def predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir):
             scores.append(detections['detection_scores'][i])
             bboxs.append(detections['detection_boxes'][i])
             i+=1
+    
         # save the new image with the predictions using these lists
         new_img_name = img_name[:img_name.index('.')]+'.png' # png format for higher quality
         save_image_bbox(img_path, os.path.join(saving_dir, new_img_name),bboxs,scores)
@@ -86,7 +126,11 @@ def predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir):
 if __name__ == '__main__':
     checkpoint_path = '/tf/custom_models/faster_rcnn_resnet152_v1_1024x1024_coco17_tpu-8/checkpoint/ckpt-92'
     pipeline_path = '/tf/custom_models/faster_rcnn_resnet152_v1_1024x1024_coco17_tpu-8/pipeline.config'
-    img_names = ['0adc9c314.jpg']
+    img_names = ['0c939e612.jpg','0d136fde3.jpg','1dfce9923.jpg','1feb020df.jpg','fb2df7e9b.jpg','f427269bf.jpg','f221ea400.jpg','f72d6ba13.jpg','f47e91719.jpg','dd22f309e.jpg','d85469648.jpg','d482d562b.jpg','0b22c4092.jpg']
+    # img_names = pd.read_csv('/tf/ship_data/annotations/100_80_90/test_100_80_90.csv')['filename'].unique()[:100]
     thresh = 0.5
     saving_dir = '/tf/predictions'
     predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir)
+
+
+
