@@ -74,12 +74,13 @@ def save_image_bbox(img_path, saving_path, bboxs, scores):
     # save the result
     dst.save(saving_path, "PNG")
 
-def predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir):
+def predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir):
     """
     Effectue la détection sur une liste d'image à partir d'un modèle donnée et selon un seuil de confiance définit.
 
     :param checkpoint_path: str, path du checkpoint du modèle choisi pour effectuer les prédictions.
     :param pipeline_path: str, path du fichier pipeline.config qui définit le pipeline du modèle.
+    :param img_dir: str, répertoire où sont stockées les images
     :param img_names: list, liste des noms d'images sur lesquelles il faut effectuer la précition.
     :param thresh: float, seuil de confiance utilisé, ex: 0.8 pour 80%.
     :param saving_dir: str, répertoire où seront enregistrées les images avec prédiction.
@@ -95,7 +96,7 @@ def predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir):
 
     for img_name in tqdm(img_names):
         # Load the image and convert it to a tensor
-        img_path = '/tf/ship_data/train_v2/'+img_name
+        img_path = os.path.join(img_dir, img_name)
         image_np = cv2.imread(img_path)
         image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
         input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
@@ -124,13 +125,16 @@ def predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir):
         save_image_bbox(img_path, os.path.join(saving_dir, new_img_name),bboxs,scores)
                
 if __name__ == '__main__':
-    checkpoint_path = '/tf/custom_models/faster_rcnn_resnet152_v1_1024x1024_coco17_tpu-8/checkpoint/ckpt-92'
-    pipeline_path = '/tf/custom_models/faster_rcnn_resnet152_v1_1024x1024_coco17_tpu-8/pipeline.config'
-    img_names = ['0c939e612.jpg','0d136fde3.jpg','1dfce9923.jpg','1feb020df.jpg','fb2df7e9b.jpg','f427269bf.jpg','f221ea400.jpg','f72d6ba13.jpg','f47e91719.jpg','dd22f309e.jpg','d85469648.jpg','d482d562b.jpg','0b22c4092.jpg']
-    # img_names = pd.read_csv('/tf/ship_data/annotations/100_80_90/test_100_80_90.csv')['filename'].unique()[:100]
+    checkpoint_path = '/tf/ship_data/custom_models/faster_rcnn_resnet152_1024_1/checkpoint/ckpt-120'
+    pipeline_path = '/tf/ship_data/custom_models/faster_rcnn_resnet152_1024_1/pipeline.config'
+    # img_names = ['0c939e612.jpg','0d136fde3.jpg','1dfce9923.jpg','1feb020df.jpg','fb2df7e9b.jpg','f427269bf.jpg','f221ea400.jpg','f72d6ba13.jpg','f47e91719.jpg','dd22f309e.jpg','d85469648.jpg','d482d562b.jpg','0b22c4092.jpg']
+    df = pd.read_csv('/tf/ship_data/annotations/100_80_90/test_100_80_90.csv')
+    img_names = df[df.xmax == df.xmax]['filename'].unique()[:100] # dataframe des images avec bateau
+    # img_names = ['1feb020df.jpg']
+    img_dir = '/tf/ship_data/train_v2/'
     thresh = 0.5
     saving_dir = '/tf/predictions'
-    predict(checkpoint_path, pipeline_path, img_names, thresh, saving_dir)
+    predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir)
 
 
 
