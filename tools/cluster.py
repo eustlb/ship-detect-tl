@@ -2,7 +2,8 @@ import cv2
 import os
 import time
 import numpy as np
-from tqdm import tqdm
+from timeit import default_timer as timer
+from multiprocessing import Pool, cpu_count
 
 T = 15
 
@@ -40,25 +41,24 @@ def exists_neighbor(img_name, direction, img_list):
 def expand_cluster(img_name, img_list):
 
     cluster = [(img_name,(0,0))]
-    dists = []
-    img_list.remove(img_name)
+    img_list_copy = img_list.copy()
+    img_list_copy.remove(img_name)
 
     to_explore = [(img_name,(0,0))]
 
     while len(to_explore) != 0  :
 
-        print('reste à explorer : ' + str(len(to_explore)))
-        print('dans un liste de : '+str(len(img_list)))
+        # print('reste à explorer : ' + str(len(to_explore)))
+        # print('dans un liste de : '+str(len(img_list_copy)))
 
         img_spot_name, coords = to_explore.pop()
 
-        print("exploring at coords : "+str(coords))
-        print('\n')
+        # print("exploring at coords : "+str(coords))
+        # print('\n')
 
         for dir in ['N', 'S', 'O', 'E'] :
-            if exists_neighbor(img_spot_name, dir, img_list)[0]:
-                dists.append(exists_neighbor(img_spot_name, dir, img_list)[2])
-                neighbor_name = exists_neighbor(img_spot_name, dir, img_list)[1]
+            if exists_neighbor(img_spot_name, dir, img_list_copy)[0]:
+                neighbor_name = exists_neighbor(img_spot_name, dir, img_list_copy)[1]
                 if dir == 'N':
                     neighbor_coords = (coords[0],coords[1]+1)
                 if dir == 'S':
@@ -69,9 +69,9 @@ def expand_cluster(img_name, img_list):
                     neighbor_coords = (coords[0]+1,coords[1])
                 cluster.append((neighbor_name, neighbor_coords))
                 to_explore.append((neighbor_name, neighbor_coords))
-                img_list.remove(neighbor_name)
+                img_list_copy.remove(neighbor_name)
 
-    return cluster, dists
+    return cluster
 
 def rebuild_mosaic(cluster):
 
@@ -100,28 +100,47 @@ def rebuild_mosaic(cluster):
 
 def main():
 
-    img_list = os.listdir('/tf/ship_data/train_v2')
+    img_list = os.listdir('/tf/ship_data/train_v2')[:10000]
+    all_clusters = []
 
+    print(f'Starting computations on {cpu_count()} cores')
 
+    while len(img_list) != 0 :
 
+        print("Nombre d'images restantes à traiter : "+str(len(img_list)))
 
+        start = timer()
 
-    img_name = '4e3393ed5.jpg'
-    img_list = os.listdir('/tf/ship_data/train_v2')
+        # On prend autant d'images que de coeurs 
+        img_spot = np.random.choice(img_list, cpu_count())
 
-    start = time.time()
+        # On crée l'itérable qui va être distribué aux workers
+        values = [(img_name, img_list) for img_name in img_spot]
 
-    result = expand_cluster(img_name, img_list)
-    cluster = result[0]
-    dists = result[1]
-    print(cluster)
-    print(dists)
-    rebuild_mosaic(cluster)
+        with Pool() as pool:
+            clusters = pool.starmap(expand_cluster, values) # clusters est la liste des clusters trouvés par expand_cluster pour chaque worker
+        all_clusters.append(clusters)
 
-    end = time.time()
+        # On enlève les images qui appartiennent maintenant à un cluster à la liste d'images de depart
+        for cluster in clusters :
+            for el in cluster:
+                img_name = el[0]
+                try:
+                    img_list.remove(img_name)
+                except ValueError:
+                    pass 
 
-    print(end-start)
+        end = timer()
+        print(f'elapsed time: {end - start}')
+    
+    # On sauvegarde les clusters dans un .txt
+    f = open('clusters.txt','w')
+    for run in all_clusters:
+        for cluster in run:
+            f.write(str(cluster))
+        f.write('\n')
+    f.close()
 
 if __name__ == '__main__':
     main()
-    
+    # f = open('/tf/clusters.txt','r')
