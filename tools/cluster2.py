@@ -1,10 +1,9 @@
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import cv2
 import os
+import pickle
 import time
-import json
 import numpy as np
-from timeit import default_timer as timer
-from multiprocessing import Pool, cpu_count
 
 T = 5
 
@@ -42,6 +41,11 @@ def exists_neighbor(img_name, direction, img_list):
 def expand_cluster(img_name, img_list):
 
     cluster = [(img_name,(0,0))]
+
+    try:
+        img_list.remove(img_name)
+    except ValueError:
+        pass
 
     to_explore = [(img_name,(0,0))]
 
@@ -99,51 +103,73 @@ def rebuild_mosaic(cluster):
     
     cv2.imwrite('/tf/mosaic/'+str(base_name)+'_mosaic.png',mosaic)
 
-def main():
+def main(img_list):
+
+    clusters_list = []
+    num_workers = 96
+
+    executor = ProcessPoolExecutor(max_workers=num_workers)
+    futures = [executor.submit(expand_cluster, img_name, img_list) for img_name in img_list[:num_workers]]
+
+    i = 0
+
+    while len(img_list) != 0:
+        for future in futures:
+            if future.done():
+                
+                cluster = future.result()
+                clusters_list.append(cluster)
+
+                # supprimer les elements du clusters de la liste d'images
+                for el in cluster:
+                    img_name = el[0]
+                    try:
+                        img_list.remove(img_name)
+                    except ValueError:
+                        pass
+                    
+                # on relance un nouveau processus
+                index = futures.index(future)
+                futures.remove(future)
+                if len(img_list)>0:
+                    img_name = img_list.pop()
+                    futures.insert(index,executor.submit(expand_cluster, img_name, img_list))
+
+                i += 1
+
+                if i%100 == 0 :
+                    print(len(img_list))      
+    
+    # sauvegarde de la liste des clusters sur le disque
+    f = open('/tf/clusters.pkl', "wb") 
+    cluster_list = [cluster for cluster in clusters_list]
+    pickle.dump(cluster_list, f)
+    f.close()
+
+if __name__ == "__main__":
 
     img_list = os.listdir('/tf/ship_data/train_v2')
-    all_clusters = []
+    # img_list = ['73c34faed.jpg' ,'69aa9f0f4.jpg' ,'acecdc9ad.jpg' ,'fc1d0f5f5.jpg', '8020e260c.jpg', '88c910ecb.jpg', 'a7bcc4634.jpg' ,'58e2d0fb8.jpg' ,'220df0d70.jpg'] + ['ec4167884.jpg', '7720cc64b.jpg', '31f0f5cd2.jpg', '4e3393ed5.jpg', '34cd21098.jpg', '52cbb54fc.jpg','09e29c7f7.jpg','20d6219ad.jpg','bb59bcb41.jpg', '34cd21098.jpg']
 
-    print(f'Starting computations on {cpu_count()} cores')
+    main(img_list)
 
-    while len(img_list) != 0 :
+    with open("/tf/clusters.pkl", "rb") as fp:   # Unpickling
+        clusters = pickle.load(fp)
 
-        print("Nombre d'images restantes à traiter : "+str(len(img_list)))
+    for cluster in clusters:
+        if len(cluster) > 1 : 
+            rebuild_mosaic(cluster)
 
-        start = timer()
 
-        # On prend autant d'images que de coeurs 
-        img_spot = np.random.choice(img_list, cpu_count())
 
-        # On crée l'itérable qui va être distribué aux workers
-        values = [(img_name, img_list) for img_name in img_spot]
 
-        with Pool() as pool:
-            clusters = pool.starmap(expand_cluster, values) # clusters est la liste des clusters trouvés par expand_cluster pour chaque worker
-        all_clusters.append(clusters)
 
-        # On enlève les images qui appartiennent maintenant à un cluster à la liste d'images de depart
-        for cluster in clusters :
-            for el in cluster:
-                img_name = el[0]
-                try:
-                    img_list.remove(img_name)
-                except ValueError:
-                    pass 
 
-        end = timer()
-        print(f'elapsed time: {end - start}')
     
-    # On sauvegarde les clusters dans un .json    
-    with open("/tf/clusters.json", "w") as fp:
-        json.dump(all_clusters, fp)
+ 
+    
 
-if __name__ == '__main__':
-    main()
-    with open("/tf/clusters.json", "r") as fp:
-        all_clusters = json.load(fp)
-    for run in all_clusters:
-        for cluster in run:
-            if len(cluster) > 1 : 
-                rebuild_mosaic(cluster)
+    
+
+
 
