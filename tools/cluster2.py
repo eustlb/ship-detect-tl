@@ -4,6 +4,7 @@ import os
 import pickle
 import time
 import numpy as np
+from tqdm import tqdm
 
 T = 5
 
@@ -111,7 +112,9 @@ def main(img_list):
     executor = ProcessPoolExecutor(max_workers=num_workers)
     futures = [executor.submit(expand_cluster, img_name, img_list) for img_name in img_list[:num_workers]]
 
-    i = 0
+    i = 0 # utilisé simplement pour afficher la longueur de la liste d'images tous les 100 clusters faits afin d'avoir un suivi 
+
+    prev_len, j = len(img_list), 0 # utilisé pour faire des sauvegardes du travail effectué tous les 10000 clusters créés
 
     while len(img_list) != 0:
         for future in futures:
@@ -138,25 +141,34 @@ def main(img_list):
                 i += 1
 
                 if i%100 == 0 :
-                    print(len(img_list))      
+                    print(len(img_list))  
+        
+        if prev_len-len(img_list)>10000:
+            f = open('/tf/clusters/clusters_'+str(j)+'.pkl', "wb") 
+            cluster_list_copy = [cluster for cluster in clusters_list]
+            pickle.dump(cluster_list_copy, f)
+            f.close()
+            j+=1
+            prev_len = len(img_list)
+
     
     # sauvegarde de la liste des clusters sur le disque
-    f = open('/tf/clusters.pkl', "wb") 
+    f = open('/tf/clusters/clusters.pkl', "wb") 
     cluster_list = [cluster for cluster in clusters_list]
     pickle.dump(cluster_list, f)
     f.close()
 
 if __name__ == "__main__":
 
-    img_list = os.listdir('/tf/ship_data/train_v2')
+    # img_list = os.listdir('/tf/ship_data/train_v2')
     # img_list = ['73c34faed.jpg' ,'69aa9f0f4.jpg' ,'acecdc9ad.jpg' ,'fc1d0f5f5.jpg', '8020e260c.jpg', '88c910ecb.jpg', 'a7bcc4634.jpg' ,'58e2d0fb8.jpg' ,'220df0d70.jpg'] + ['ec4167884.jpg', '7720cc64b.jpg', '31f0f5cd2.jpg', '4e3393ed5.jpg', '34cd21098.jpg', '52cbb54fc.jpg','09e29c7f7.jpg','20d6219ad.jpg','bb59bcb41.jpg', '34cd21098.jpg']
 
-    main(img_list)
+    # main(img_list)
 
-    with open("/tf/clusters.pkl", "rb") as fp:   # Unpickling
+    with open("/tf/clusters/clusters_0.pkl", "rb") as fp:   # Unpickling
         clusters = pickle.load(fp)
 
-    for cluster in clusters:
+    for cluster in tqdm(clusters):
         if len(cluster) > 1 : 
             rebuild_mosaic(cluster)
 
