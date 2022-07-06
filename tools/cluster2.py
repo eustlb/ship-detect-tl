@@ -165,11 +165,11 @@ if __name__ == "__main__":
 
     # main(img_list)
 
-    with open("/tf/clusters/clusters_0.pkl", "rb") as fp:   # Unpickling
+    with open("/tf/clusters/clusters.pkl", "rb") as fp:   # Unpickling
         clusters = pickle.load(fp)
 
     for cluster in tqdm(clusters):
-        if len(cluster) > 1 : 
+        if len(cluster) > 100 : 
             rebuild_mosaic(cluster)
 
 

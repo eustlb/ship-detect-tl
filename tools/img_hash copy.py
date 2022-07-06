@@ -4,6 +4,8 @@ import shutil
 from cluster2 import main, rebuild_mosaic, expand_cluster
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import pickle
+import networkx 
+from networkx.algorithms.components.connected import connected_components
 
 def normalized_rle(rle):
     """
@@ -54,49 +56,63 @@ def find_cluster(boat_h, cluster, know_boats, df_hash):
                 find_cluster(boat_h, cluster, know_boats, df_hash)
     return cluster
 
+def to_edges(l):
+    """ 
+        treat `l` as a Graph and returns it's edges 
+        to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
+    """
+    it = iter(l)
+    last = next(it)
+
+    for current in it:
+        yield last, current
+        last = current  
+
+def find_clusters(path_csv):
+    # creer la liste des imgs par bateau : 
+    df = pd.read_csv(path_csv)
+    l = []
+    for index,row in df.iterrows():
+        l.append(row['ImageIds'].split(' '))
+
+    out = []
+
+    while len(l)>0:
+        first, *rest = l
+        first = set(first)
+
+        lf = -1
+        while len(first)>lf:
+            lf = len(first)
+
+            rest2 = []
+            for r in rest:
+                if len(first.intersection(set(r)))>0:
+                    first |= set(r)
+                else:
+                    rest2.append(r)     
+            rest = rest2
+
+        out.append(first)
+        l = rest
+        if len(l)%1000 < 10:
+            print(len(l))
+
+    return out
+
 if __name__ == '__main__':
+    path_csv = '/tf/ship_data/imgs_per_boats.csv'
+    clusters = find_clusters(path_csv)
+    for cluster in clusters:
+        l = []
+        for el in cluster:
+            l.append(l)
+        cluster = l
 
-    df_hash = pd.read_csv('/tf/ship_data/boats_hash.csv')
-    # df_hash = df_hash[df_hash.ImageId in df_hash['ImageId'].unique()[:10]]
-    num_workers = 96
-
-    clusters = []
-
-    executor = ProcessPoolExecutor(max_workers=num_workers)
-    futures = [executor.submit(find_cluster, boat_h, [], [], df_hash) for boat_h in df_hash['BoatHash'].unique()[:num_workers]]
-
-
-    i = 0
-    prev_len, j = len(df_hash['BoatHash'].unique()), 0 # utilisé pour faire des sauvegardes du travail effectué tous les 10000 clusters créés
-
-    while len(df_hash['BoatHash'].unique()) != 0:
-
-        for future in futures:
-
-            if future.done():
+    print(clusters[0][0])
     
-                cluster = future.result()
-                clusters.append(cluster)
 
-                # supprimer du dataframe les bateaux associées aux images du cluster si cela n'a pas déjà été fait par un process concurrent afin d'éviter d'y chercher pour rien 
-                for img_name in cluster:
-                    df_hash.drop(df_hash[df_hash.ImageId == img_name].index, inplace=True)
-                    
-                # on relance un nouveau processus
-                index = futures.index(future)
-                futures.remove(future)
-                boat_h = df_hash['BoatHash'].unique()[0]
-                futures.insert(index,executor.submit(find_cluster, boat_h, [], [], df_hash))
-
-                i += 1
-                print(len(df_hash['BoatHash'].unique()))
-
-                if i%100 == 0 :
-                    print(len(df_hash['BoatHash'].unique()))
-        
-        if prev_len-len(df_hash['BoatHash'].unique())>1000:
-            f = open('/tf/clusters_h/clusters_h_'+str(j)+'.pkl', "wb") 
-            pickle.dump(clusters, f)
-            f.close()
-            j+=1
-            prev_len = len(df_hash['BoatHash'].unique())
+    # sauvegarde de la liste des clusters sur le disque
+    # f = open('/tf/clusters_h/clusters_h.pkl', "wb") 
+    # pickle.dump(clusters, f)
+    # f.close()
