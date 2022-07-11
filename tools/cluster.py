@@ -1,17 +1,26 @@
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import cv2
 import os
+import pickle
 import time
-import json
 import numpy as np
-from timeit import default_timer as timer
-from multiprocessing import Pool, cpu_count
+from tqdm import tqdm
 
-T = 5
+# La base "airbus ship detection challenge" est composée d'images 768*768 extraites à partir d'images satellites avec un pas de 256pix
+# Ce projet à pour objetif de reconstruire les différentes images satellites à partir desquelles a été formée cette base.
+# ==============================================================================
+
+T = 5 # threeshold variable, will be used to tell if to images are to be considered equal (using there euclidian distance)
 
 def find_duplicate(img_name, crop_number1, crop_number2, img_list):
     """
-    crop_number1 : numero du crop qui sera regardé dans l'image de départ
-    crop_number2 : numero du crop qui sera regardé pour les images de img_list et donc comparé avec le crop de l'image de départ
+    Prends une image, deux numéros de crops (cf. build_crops.py) et une liste d'images dans laquelle chercher un voisin, 
+    c'est-à-dire une image dont une partie recouvrerait une partie de l'image de départ.
+    On cherche ici une image dont le crop_number2 correspondra au crop_number1 de l'image de départ.
+
+    :param crop_number1: int, numero du crop qui sera regardé dans l'image de départ.
+    :param crop_number2: int, numero du crop qui sera regardé pour les images de img_list et donc comparé avec le crop de l'image de départ.
+    :return rep: tuple, (True, *nom de l'image*) s'il trouve un duplicata, (False, 'Pas de voisin)
     """
     rep = (False,'Pas de voisin')
     crop1 = cv2.imread('/tf/imgs_crops/'+img_name[:img_name.index('.')]+'_'+str(crop_number1)+'_'+'.png')
@@ -24,8 +33,12 @@ def find_duplicate(img_name, crop_number1, crop_number2, img_list):
 
 def exists_neighbor(img_name, direction, img_list):
     """
-    Prend un nom d'image et un direction et renvoie si il y a un voisin dans la direction donnée dans la liste img_list
-    Renvoie (True, 'non_du_voisin') ou (False,'Pas de voisin')
+    Prend un nom d'image et un direction et renvoie si il y a un voisin dans la direction donnée dans la liste img_list.
+
+    :param img_name: str, nom de l'image de départ
+    :param direction: str, doit être dans ('N','S','O','E'). Indique la direction dans laquelle chercher un voisin.
+    :param  img_list: liste dans laquelle il faut chercher l'image.
+    :return: (True, 'non_du_voisin') ou (False,'Pas de voisin')
     """
     if direction == 'N':
         return find_duplicate(img_name, 5, 8, img_list)
@@ -42,6 +55,11 @@ def exists_neighbor(img_name, direction, img_list):
 def expand_cluster(img_name, img_list):
 
     cluster = [(img_name,(0,0))]
+
+    try:
+        img_list.remove(img_name)
+    except ValueError:
+        pass
 
     to_explore = [(img_name,(0,0))]
 
@@ -99,51 +117,84 @@ def rebuild_mosaic(cluster):
     
     cv2.imwrite('/tf/mosaic/'+str(base_name)+'_mosaic.png',mosaic)
 
-def main():
+def main(img_list):
 
-    img_list = os.listdir('/tf/ship_data/train_v2')
-    all_clusters = []
+    clusters_list = []
+    num_workers = 96
 
-    print(f'Starting computations on {cpu_count()} cores')
+    executor = ProcessPoolExecutor(max_workers=num_workers)
+    futures = [executor.submit(expand_cluster, img_name, img_list) for img_name in img_list[:num_workers]]
 
-    while len(img_list) != 0 :
+    i = 0 # utilisé simplement pour afficher la longueur de la liste d'images tous les 100 clusters faits afin d'avoir un suivi 
 
-        print("Nombre d'images restantes à traiter : "+str(len(img_list)))
+    prev_len, j = len(img_list), 0 # utilisé pour faire des sauvegardes du travail effectué tous les 10000 clusters créés
 
-        start = timer()
+    while len(img_list) != 0:
+        for future in futures:
+            if future.done():
+                
+                cluster = future.result()
+                clusters_list.append(cluster)
 
-        # On prend autant d'images que de coeurs 
-        img_spot = np.random.choice(img_list, cpu_count())
+                # supprimer les elements du clusters de la liste d'images
+                for el in cluster:
+                    img_name = el[0]
+                    try:
+                        img_list.remove(img_name)
+                    except ValueError:
+                        pass
+                    
+                # on relance un nouveau processus
+                index = futures.index(future)
+                futures.remove(future)
+                if len(img_list)>0:
+                    img_name = img_list.pop()
+                    futures.insert(index,executor.submit(expand_cluster, img_name, img_list))
 
-        # On crée l'itérable qui va être distribué aux workers
-        values = [(img_name, img_list) for img_name in img_spot]
+                i += 1
 
-        with Pool() as pool:
-            clusters = pool.starmap(expand_cluster, values) # clusters est la liste des clusters trouvés par expand_cluster pour chaque worker
-        all_clusters.append(clusters)
+                if i%100 == 0 :
+                    print(len(img_list))  
+        
+        if prev_len-len(img_list)>10000:
+            f = open('/tf/clusters/clusters_'+str(j)+'.pkl', "wb") 
+            cluster_list_copy = [cluster for cluster in clusters_list]
+            pickle.dump(cluster_list_copy, f)
+            f.close()
+            j+=1
+            prev_len = len(img_list)
 
-        # On enlève les images qui appartiennent maintenant à un cluster à la liste d'images de depart
-        for cluster in clusters :
-            for el in cluster:
-                img_name = el[0]
-                try:
-                    img_list.remove(img_name)
-                except ValueError:
-                    pass 
-
-        end = timer()
-        print(f'elapsed time: {end - start}')
     
-    # On sauvegarde les clusters dans un .json    
-    with open("/tf/clusters.json", "w") as fp:
-        json.dump(all_clusters, fp)
+    # sauvegarde de la liste des clusters sur le disque
+    f = open('/tf/clusters/clusters.pkl', "wb") 
+    cluster_list = [cluster for cluster in clusters_list]
+    pickle.dump(cluster_list, f)
+    f.close()
 
-if __name__ == '__main__':
-    main()
-    with open("/tf/clusters.json", "r") as fp:
-        all_clusters = json.load(fp)
-    for run in all_clusters:
-        for cluster in run:
-            if len(cluster) > 1 : 
-                rebuild_mosaic(cluster)
+if __name__ == "__main__":
+
+    # img_list = os.listdir('/tf/ship_data/train_v2')
+    # img_list = ['73c34faed.jpg' ,'69aa9f0f4.jpg' ,'acecdc9ad.jpg' ,'fc1d0f5f5.jpg', '8020e260c.jpg', '88c910ecb.jpg', 'a7bcc4634.jpg' ,'58e2d0fb8.jpg' ,'220df0d70.jpg'] + ['ec4167884.jpg', '7720cc64b.jpg', '31f0f5cd2.jpg', '4e3393ed5.jpg', '34cd21098.jpg', '52cbb54fc.jpg','09e29c7f7.jpg','20d6219ad.jpg','bb59bcb41.jpg', '34cd21098.jpg']
+
+    # main(img_list)
+
+    with open("/tf/clusters/clusters.pkl", "rb") as fp:   # Unpickling
+        clusters = pickle.load(fp)
+
+    for cluster in tqdm(clusters):
+        if len(cluster) > 100 : 
+            rebuild_mosaic(cluster)
+
+
+
+
+
+
+    
+ 
+    
+
+    
+
+
 

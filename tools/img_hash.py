@@ -7,7 +7,12 @@ import pickle
 
 def normalized_rle(rle):
     """
-    Prend en argument un rle au format str et renvoie le rle normalisé, c'est à dire la même forme définie mais placée en haut à gauche de l'image
+    Prend en argument un rle au format str et renvoie le rle normalisé, 
+    c'est à dire conservant la forme définie par le rle mais placé en haut à gauche de l'image.
+    Ainsi peut importe sa position dans l'image, un bateau aura toujours le même rle normalisé.
+
+    :param rle: str, rle d'un bateau sur une image.
+    :return new_rle: str, rle normalisé correspondant
     """
     pixels = [int(el) for el in rle.split(' ')[::2]]
     lenghts = [int(el) for el in rle.split(' ')[1::2]]
@@ -25,6 +30,15 @@ def normalized_rle(rle):
     return new_rle
 
 def hash_boats_rle(path_to_csv, path_new_csv):
+    """
+    Prends le CSV de départ, c'est-a-dire qui associe à une image le(s) rle du bateau(x) qu'elle contient, 
+    et crée un nouveau CSV, analogue au premier mais ou chaque rle à été transformé d'abord en son rle normalisé,
+    puis en un entier grâce à une fonction de hashage (afin d'être ensuite comparables).
+
+    :param path_to_csv: str, path du csv de départ, csv d'origine fourni dans la base kaggle.
+    :param path_new_csv: str, path du nouveau csv qui va être créé et contenant les hash des bateaux.
+    :return: Void.
+    """
     hash_dict = {'ImageId':[], 'BoatHash':[]}
 
     df_rle = pd.read_csv(path_to_csv)
@@ -38,20 +52,25 @@ def hash_boats_rle(path_to_csv, path_new_csv):
     df = pd.DataFrame.from_dict(hash_dict)
     pd.DataFrame.to_csv(df, path_new_csv)
 
-def find_cluster(boat_h, cluster, know_boats, df_hash):
+def find_cluster(boat_h, cluster, known_boats, df_hash):
     """
     Utilisé de façon récursive. Les listes de départ cluster et know_boats doivent être vides au premier appel de la fonction.
     Principe :
     Lorsque appelée sur un certain boat_h, elle ajoute au cluster toutes les images qui contiennent ce bateau et qui ne sont pas encore dans le cluster.
-    Puis pour chacune des images du cluster, on regarde chaque bateau contenu par ces images et on reappel notre fonction pour chacun de nos bateau avec les listes ainsi formées.
+    Puis pour chacune des images du cluster, on regarde chaque bateau contenu par ces images et on appelle de nouveau notre fonction pour chacun de nos bateau avec les listes ainsi formées.
     
+    :param boat_h: int, hash du rle normalisé du bateau. Premier bateau à partir duquel va être construit le cluster.
+    :param cluster: list, liste images présentes dans un même cluster. Est d'abord vide au premier appel de la fonction.
+    :param known_boats: list, liste des bateaux (hash) connus comme étant dans ce cluster.
+    :param df_hash: dataframe tiré du CSV construit par la fonction hash_boats_rle.
+    :return cluster: list, liste des images (noms) présentes dans un même cluster construit à partir du premier bateau.
     """
-    know_boats.append(boat_h)
+    known_boats.append(boat_h)
     cluster += [img for img in df_hash[df_hash.BoatHash == boat_h]['ImageId'] if img not in cluster]
     for img_name in cluster:
         for boat_h in [boat_h for boat_h in df_hash[df_hash.ImageId == img_name]['BoatHash']]:
-            if boat_h not in know_boats:
-                find_cluster(boat_h, cluster, know_boats, df_hash)
+            if boat_h not in known_boats:
+                find_cluster(boat_h, cluster, known_boats, df_hash)
     return cluster
 
 if __name__ == '__main__':
