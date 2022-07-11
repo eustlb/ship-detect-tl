@@ -16,17 +16,9 @@ def generate_boat_csv(path_hash_csv, path_new_csv):
     pd.DataFrame.to_csv(df, path_new_csv)
 
 
-print('hello')
-path_hash_csv = '/tf/ship_data/boats_hash.csv'
-path_new_csv = '/tf/ship_data/imgs_per_boats.csv'
-generate_boat_csv(path_hash_csv, path_new_csv)
- 
-
-if __name__=='main':
-
-    print('hello')
-    # path_hash_csv = '/tf/ship_data/boats_hash.csv'
-    # path_new_csv = '/tf/ship_data/imgs_per_boats.csv'
-    # generate_boat_csv(path_hash_csv, path_new_csv)
+if __name__=='__main__':
+    path_hash_csv = '/tf/ship_data/boats_hash.csv'
+    path_new_csv = '/tf/ship_data/imgs_per_boats.csv'
+    generate_boat_csv(path_hash_csv, path_new_csv)
     
     
