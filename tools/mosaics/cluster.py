@@ -23,9 +23,9 @@ def find_duplicate(img_name, crop_number1, crop_number2, img_list):
     :return rep: tuple, (True, *nom de l'image*) s'il trouve un duplicata, (False, 'Pas de voisin)
     """
     rep = (False,'Pas de voisin')
-    crop1 = cv2.imread('/tf/imgs_crops/'+img_name[:img_name.index('.')]+'_'+str(crop_number1)+'_'+'.png')
+    crop1 = cv2.imread('/tf/ship_data/find_duplicates/mosaics/imgs_crops/'+img_name[:img_name.index('.')]+'_'+str(crop_number1)+'_'+'.png')
     for img_name_2 in img_list:
-        crop2 = cv2.imread('/tf/imgs_crops/'+img_name_2[:img_name_2.index('.')]+'_'+str(crop_number2)+'_'+'.png')
+        crop2 = cv2.imread('/tf/ship_data/find_duplicates/mosaics/imgs_crops/'+img_name_2[:img_name_2.index('.')]+'_'+str(crop_number2)+'_'+'.png')
         dist = cv2.norm(crop1 - crop2, cv2.NORM_L2)
         if dist < T :
             return (True,img_name_2,dist)
@@ -172,18 +172,17 @@ def main(img_list):
     f.close()
 
 if __name__ == "__main__":
-
-    # img_list = os.listdir('/tf/ship_data/train_v2')
-    # img_list = ['73c34faed.jpg' ,'69aa9f0f4.jpg' ,'acecdc9ad.jpg' ,'fc1d0f5f5.jpg', '8020e260c.jpg', '88c910ecb.jpg', 'a7bcc4634.jpg' ,'58e2d0fb8.jpg' ,'220df0d70.jpg'] + ['ec4167884.jpg', '7720cc64b.jpg', '31f0f5cd2.jpg', '4e3393ed5.jpg', '34cd21098.jpg', '52cbb54fc.jpg','09e29c7f7.jpg','20d6219ad.jpg','bb59bcb41.jpg', '34cd21098.jpg']
-
-    # main(img_list)
-
-    with open("/tf/clusters/clusters.pkl", "rb") as fp:   # Unpickling
-        clusters = pickle.load(fp)
-
-    for cluster in tqdm(clusters):
-        if len(cluster) > 100 : 
-            rebuild_mosaic(cluster)
+    with open("/tf/ship_data/find_duplicates/reassemble_cluster/cluster_reassembled.pkl", "rb") as fp:   # Unpickling
+         clusters = pickle.load(fp)
+    
+    small_clust = []
+    for cluster in clusters:
+        if len(cluster)>50:
+            small_clust.append(cluster)
+    
+    for cluster in small_clust[:20]:
+        clust = expand_cluster(cluster[0],cluster)
+        rebuild_mosaic(clust)
 
 
 

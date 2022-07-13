@@ -1,8 +1,10 @@
 import pandas as pd
 from tqdm import tqdm
 
-
-def generate_boat_csv(path_hash_csv, path_new_csv):
+def imgs_per_b_csv(path_hash_csv, path_new_csv):
+    """
+    Genère le CSV de toutes les images qui contiennent un certain bateau (identifié par son hash).
+    """
     df_hash = pd.read_csv(path_hash_csv)
     boats = df_hash['BoatHash'].unique()
     print(len(boats))
@@ -15,10 +17,5 @@ def generate_boat_csv(path_hash_csv, path_new_csv):
     df = pd.DataFrame.from_dict(boats_h_dict)
     pd.DataFrame.to_csv(df, path_new_csv)
 
-
 if __name__=='__main__':
-    path_hash_csv = '/tf/ship_data/boats_hash.csv'
-    path_new_csv = '/tf/ship_data/imgs_per_boats.csv'
-    generate_boat_csv(path_hash_csv, path_new_csv)
-    
-    
+    print()

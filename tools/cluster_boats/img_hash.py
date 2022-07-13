@@ -1,9 +1,43 @@
-from asyncio import as_completed
 import pandas as pd
-import shutil
-from cluster2 import main, rebuild_mosaic, expand_cluster
+from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import pickle
+import numpy as np
+
+H = 768
+W = 768
+
+def rle2bbox(rle, shape):
+    '''
+    taken from : https://www.kaggle.com/code/eigrad/convert-rle-to-bounding-box-x0-y0-x1-y1/notebook
+    '''
+    
+    a = np.fromiter(rle.split(), dtype=np.uint)
+    a = a.reshape((-1, 2))  # an array of (start, length) pairs
+    a[:,0] -= 1  # `start` is 1-indexed
+    
+    y0 = a[:,0] % shape[0]
+    y1 = y0 + a[:,1]
+    if np.any(y1 > shape[0]):
+        # got `y` overrun, meaning that there are a pixels in mask on 0 and shape[0] position
+        y0 = 0
+        y1 = shape[0]
+    else:
+        y0 = np.min(y0)
+        y1 = np.max(y1)
+    
+    x0 = a[:,0] // shape[0]
+    x1 = (a[:,0] + a[:,1]) // shape[0]
+    x0 = np.min(x0)
+    x1 = np.max(x1)
+    
+    if x1 > shape[1]:
+        # just went out of the image dimensions
+        raise ValueError("invalid RLE or image dimensions: x1=%d > shape[1]=%d" % (
+            x1, shape[1]
+        ))
+
+    return x0, y0, x1, y1
 
 def normalized_rle(rle):
     """
@@ -33,13 +67,15 @@ def hash_boats_rle(path_to_csv, path_new_csv):
     """
     Prends le CSV de départ, c'est-a-dire qui associe à une image le(s) rle du bateau(x) qu'elle contient, 
     et crée un nouveau CSV, analogue au premier mais ou chaque rle à été transformé d'abord en son rle normalisé,
-    puis en un entier grâce à une fonction de hashage (afin d'être ensuite comparables).
+    puis en un entier grâce à une fonction de hashage (afin d'être ensuite comparables). 
+    Seront également présent dans le CSV le rle (afin de savoir de quel bateau on parle),
+    la largeur (W) et hauteur (H) du bateau.
 
     :param path_to_csv: str, path du csv de départ, csv d'origine fourni dans la base kaggle.
     :param path_new_csv: str, path du nouveau csv qui va être créé et contenant les hash des bateaux.
     :return: Void.
     """
-    hash_dict = {'ImageId':[], 'BoatHash':[]}
+    hash_dict = {'ImageId':[], 'BoatRLE':[], 'BoatHash':[], 'W':[], 'H':[]}
 
     df_rle = pd.read_csv(path_to_csv)
     df_rle_boats = df_rle[df_rle.EncodedPixels == df_rle.EncodedPixels] # dataframme des images contenant au moins un bateau
@@ -47,7 +83,11 @@ def hash_boats_rle(path_to_csv, path_new_csv):
     for img_name in tqdm(df_rle_boats['ImageId'].unique()):
         for rle in df_rle_boats[df_rle_boats.ImageId == img_name]['EncodedPixels']:
             hash_dict['ImageId'].append(img_name)
+            hash_dict['BoatRLE'].append(rle)
             hash_dict['BoatHash'].append(hash(normalized_rle(rle)))
+            xmin, ymin, xmax, ymax = rle2bbox(rle, (H, W))
+            hash_dict['W'].append(xmax-xmin)
+            hash_dict['H'].append(ymax-ymin)
 
     df = pd.DataFrame.from_dict(hash_dict)
     pd.DataFrame.to_csv(df, path_new_csv)
@@ -73,8 +113,51 @@ def find_cluster(boat_h, cluster, known_boats, df_hash):
                 find_cluster(boat_h, cluster, known_boats, df_hash)
     return cluster
 
-if __name__ == '__main__':
+def to_edges(l):
+    """ 
+        treat `l` as a Graph and returns it's edges 
+        to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
+    """
+    it = iter(l)
+    last = next(it)
 
+    for current in it:
+        yield last, current
+        last = current  
+
+def find_clusters(path_csv):
+    # creer la liste des imgs par bateau : 
+    df = pd.read_csv(path_csv)
+    l = []
+    for index,row in df.iterrows():
+        l.append(row['ImageIds'].split(' '))
+
+    out = []
+
+    while len(l)>0:
+        first, *rest = l
+        first = set(first)
+
+        lf = -1
+        while len(first)>lf:
+            lf = len(first)
+
+            rest2 = []
+            for r in rest:
+                if len(first.intersection(set(r)))>0:
+                    first |= set(r)
+                else:
+                    rest2.append(r)     
+            rest = rest2
+
+        out.append(first)
+        l = rest
+        if len(l)%1000 < 10:
+            print(len(l))
+
+    return out
+
+def main1():
     df_hash = pd.read_csv('/tf/ship_data/boats_hash.csv')
     # df_hash = df_hash[df_hash.ImageId in df_hash['ImageId'].unique()[:10]]
     num_workers = 96
@@ -119,3 +202,23 @@ if __name__ == '__main__':
             f.close()
             j+=1
             prev_len = len(df_hash['BoatHash'].unique())
+
+def main2():
+    path_csv = '/tf/ship_data/imgs_per_boats.csv'
+    clusters = find_clusters(path_csv)
+    for cluster in clusters:
+        l = []
+        for el in cluster:
+            l.append(l)
+        cluster = l
+
+    print(clusters[0][0])
+    # sauvegarde de la liste des clusters sur le disque
+    f = open('/tf/clusters_h/clusters_h.pkl', "wb") 
+    pickle.dump(clusters, f)
+    f.close()
+
+if __name__ == '__main__':
+    path_to_csv = '/tf/ship_data/train_ship_segmentations_v2.csv'
+    path_new_csv = '/tf/ship_data/find_duplicates/hash/boats_hashV2.csv'
+    hash_boats_rle(path_to_csv, path_new_csv)

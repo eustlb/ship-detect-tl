@@ -27,7 +27,7 @@ def save_image_bbox(img_path, saving_path, bboxs, scores):
         y0 = bboxs[i][0]*h
         x1 = bboxs[i][3]*w
         y1 = bboxs[i][2]*h
-        font_file = "/usr/local/share/fonts/bebas_neue/BebasNeue-Regular.ttf"
+        font_file = "/tf/ship_detect_tl/data/BebasNeue-Regular.ttf"
         font_size = 12
         font = ImageFont.truetype(font_file, font_size)
         text = str(round(scores[i]*100))+'%'
