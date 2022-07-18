@@ -4,6 +4,7 @@ import os
 import pickle
 import time
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 # La base "airbus ship detection challenge" est composée d'images 768*768 extraites à partir d'images satellites avec un pas de 256pix
@@ -172,17 +173,23 @@ def main(img_list):
     f.close()
 
 if __name__ == "__main__":
-    with open("/tf/ship_data/find_duplicates/reassemble_cluster/cluster_reassembled.pkl", "rb") as fp:   # Unpickling
+    with open("/Users/eustachelebihan/tf/ship_detect_tl/CSV/cluster_reassembled.pkl", "rb") as fp:   # Unpickling
          clusters = pickle.load(fp)
     
-    small_clust = []
-    for cluster in clusters:
-        if len(cluster)>50:
-            small_clust.append(cluster)
-    
-    for cluster in small_clust[:20]:
-        clust = expand_cluster(cluster[0],cluster)
-        rebuild_mosaic(clust)
+    big_clust = []
+    for clust in clusters:
+        if len(clust) > len(big_clust):
+            big_clust = clust
+            
+
+    df = pd.read_csv('/Users/eustachelebihan/tf/ship_detect_tl/CSV/clusters_sizes.csv')
+    df_max = df[df.ClusterId == 2]
+    print(type(df_max['Images']))
+    img_list = df_max['Images'][2].split(' ')
+    print(len(img_list))
+    print(len(big_clust))
+    clust = expand_cluster(big_clust[0], big_clust)
+    rebuild_mosaic(clust)
 
 
 

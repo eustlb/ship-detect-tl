@@ -1,6 +1,5 @@
 from sys import path
 import pandas as pd
-from sklearn import cluster
 from tqdm import tqdm
 import os
 import numpy as np
@@ -111,19 +110,19 @@ if __name__ == '__main__' :
     # path_new_csv = '/tf/ship_data/find_duplicates/reassemble_cluster/clusters_sizes.csv'
     # clusters_sizes_csv(path_clust_csv, path_h_csv, path_new_csv)
 
-    # # 2.
-    # path_h_csv = '/tf/ship_data/find_duplicates/hash/boats_hashV2.csv'
-    # boats_h_l = pd.read_csv(path_h_csv)['BoatHash'].unique()
-    # dir_new_csv = '/tf/ship_data/boat_info'
-    # resol = 8
-    # sizes_distrib_csv(boats_h_l, path_h_csv, dir_new_csv, resol)
-
-    3.
-    path_h_csv = '/tf/ship_data/find_duplicates/hash/boats_hashV2.csv'
-    nb_bar = 384
+    # 2.
+    path_h_csv = '/Users/eustachelebihan/tf/ship_detect_tl/CSV/boats_hashV2.csv'
     boats_h_l = pd.read_csv(path_h_csv)['BoatHash'].unique()
-    saving_path = '/tf/ship_data/boat_info/boats_size_all'+'_'+str(nb_bar)+'.pdf'
-    draw_distrib(boats_h_l, path_h_csv, nb_bar, saving_path)
+    dir_new_csv = '/Users/eustachelebihan/tf/ship_detect_tl/CSV/boat_info'
+    resol = 8
+    sizes_distrib_csv(boats_h_l, path_h_csv, dir_new_csv, resol)
+
+    # # 3.
+    # path_h_csv = '/tf/ship_data/find_duplicates/hash/boats_hashV2.csv'
+    # nb_bar = 384
+    # boats_h_l = pd.read_csv(path_h_csv)['BoatHash'].unique()
+    # saving_path = '/tf/ship_data/boat_info/boats_size_all'+'_'+str(nb_bar)+'.pdf'
+    # draw_distrib(boats_h_l, path_h_csv, nb_bar, saving_path)
 
 
 
