@@ -29,3 +29,4 @@ def modify_pipeline(pipeline_config_path, config_dict):
 
     # Remplacer le pipeline.config par ce nouveau pipeline.config contenant les valeurs souhaitées.
     config_util.save_pipeline_config(pipeline_config, os.path.dirname(pipeline_config_path))
+

@@ -32,7 +32,7 @@ def save_image_bbox(img_path, saving_path, bboxs, scores):
         y0 = bboxs[i][0]*h
         x1 = bboxs[i][3]*w
         y1 = bboxs[i][2]*h
-        font_file = "/usr/local/share/fonts/bebas_neue/BebasNeue-Regular.ttf"
+        font_file = "/tf/ship_detect_tl/data/BebasNeue-Regular.ttf"
         font_size = 12
         font = ImageFont.truetype(font_file, font_size)
         text = str(round(scores[i]*100))+'%'
@@ -153,7 +153,7 @@ def predict2(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_
 
 def extract_im_video(video_path, saving_dir, nb_images):
     vidcap = cv2.VideoCapture(video_path)
-    vidcap.set(cv2.CAP_PROP_POS_MSEC,250000)      # just cue to 20 sec. position
+    vidcap.set(cv2.CAP_PROP_POS_MSEC, 180000)      # just cue to 20 sec. position
     success,image = vidcap.read()
     count = 0
     while count<nb_images:
@@ -176,20 +176,20 @@ def create_video(video_dir, saving_dir):
     clip.write_videofile(os.path.join(saving_dir,"video.mp4"))
 
 if __name__ == '__main__':
-    video_path = '/tf/ship_data/video/images_drone_brise_lame/vol_drone.MP4'
+    video_path = '/tf/ship_data/archives/video/images_drone_brise_lame/vol_drone.MP4'
     saving_dir = '/tf/video'
-    nb_images = 900
-    # extract_im_video(video_path,saving_dir,nb_images)
+    nb_images = 3600
+    extract_im_video(video_path,saving_dir,nb_images)
 
     origin_frames_dir = '/tf/video'
     saving_dir = '/tf/video_crop'
-    # adapt_frames(origin_frames_dir, saving_dir)
+    adapt_frames(origin_frames_dir, saving_dir)
 
-    checkpoint_path = '/tf/custom_models/faster_rcnn_resnet101_6/checkpoint/ckpt-11'
-    pipeline_path = '/tf/custom_models/faster_rcnn_resnet101_6/pipeline.config'
+    checkpoint_path = '/tf/custom_models/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/checkpoint/ckpt-51'
+    pipeline_path = '/tf/custom_models/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/pipeline.config'
     img_dir = '/tf/video_crop'
     img_names = os.listdir(img_dir)
-    thresh = 0.3
+    thresh = 0.5
     saving_dir = '/tf/video_predi'
     predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir)
 

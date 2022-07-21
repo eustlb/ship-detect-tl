@@ -7,7 +7,53 @@ from tqdm import tqdm
 from object_detection.utils import dataset_util
 import random
 import random
-from sizesV2 import draw_distrib
+import numpy as np
+import matplotlib.pyplot as plt
+
+def draw_distrib(boats_h_l, path_h_csv, nb_bar, saving_path):
+    """
+    Crée un diagramme à barres (format pdf) de la distribution des largeurs et hateurs des bateaux présents dans boats_h_l.
+
+    :param boats_h_l: list, liste des hashs des bateaux dont on veut avoir la distribution en taille. 
+    :param path_h_csv: str, path du csv qui lit les hash des bateaux à leurs tailles
+    :param nb_bar: int, nombre de barres du diagramme.
+    :param saving_dir: str, path où sera enregistré le pdf.
+    :return: Void.
+    """
+
+    df_h = pd.read_csv(path_h_csv)
+    sizes = pd.DataFrame(columns = ['filename','W' , 'H'])
+
+    bar_width = 768 // nb_bar
+    counts_w = np.zeros(nb_bar)
+    counts_h = np.zeros(nb_bar)
+
+    for boat_h in tqdm(boats_h_l):
+        w = df_h[df_h.BoatHash == boat_h]['W'].unique()[0]
+        h = df_h[df_h.BoatHash == boat_h]['H'].unique()[0]
+        counts_w[int(w//bar_width)]+=1
+        counts_h[int(h//bar_width)]+=1
+        
+    x = np.linspace(bar_width/2,768+bar_width/2,nb_bar,endpoint=False)
+    
+    fig, ax = plt.subplots(2, 1, figsize=(10,12))
+    plt.subplots_adjust(hspace=0.25)
+    
+    ax[0].set_xticks(np.arange(0, 776, 25))
+    ax[0].tick_params(axis='x', labelrotation=45)
+    ax[0].set_xlabel('taille en pixels')
+    ax[0].set_ylabel("Nombre de bateaux")
+    ax[0].set_title('Distribution de la largeur des bateaux sur les images')
+    ax[0].bar(x, counts_w, bar_width, color='#6495ed' )
+    
+    ax[1].set_xticks(np.arange(0, 776, 25))
+    ax[1].tick_params(axis='x', labelrotation=45)
+    ax[1].set_xlabel('taille en pixels')
+    ax[1].set_ylabel("Nombre de bateaux")
+    ax[1].set_title('Distribution de la hauteur des bateaux sur les images')
+    ax[1].bar(x, counts_h, bar_width, color='#6495ed' )
+    
+    plt.savefig(saving_path)
 
 def class_text_to_int(row_label):
     """
@@ -19,20 +65,30 @@ def class_text_to_int(row_label):
     if row_label == 'ship':
         return 1
 
-def create_tf_example(file_name, path_to_images, labels_df):
+def create_tf_example(file_name, imgs_dir, mask_name, masks_dir, labels_df):
     """
     Adaptated from: https://github.com/tensorflow/models/blob/84c0e81fe9683dbdd5ee6b088fa756302f60dc25/research/object_detection/g3doc/using_your_own_dataset.md.
     """
     filename = file_name.encode('utf8') # Filename of the image. Empty if image is not from file
     
-    with tf.io.gfile.GFile(os.path.join(path_to_images, file_name), 'rb') as fid:
+    # image
+    with tf.io.gfile.GFile(os.path.join(imgs_dir, file_name), 'rb') as fid:
         encoded_jpg = fid.read()
     encoded_jpg_io = io.BytesIO(encoded_jpg)
-
     image = Image.open(encoded_jpg_io)
     width, height = image.size
-
     image_format = b'jpg' # b'jpeg' or b'png' 
+    key = hashlib.sha256(encoded_jpg).hexdigest()
+
+    # mask 
+    with tf.io.gfile.GFile(os.path.join(masks_dir, mask_name), 'rb') as fid:
+        encoded_mask_png = fid.read()
+    encoded_png_io = io.BytesIO(encoded_mask_png)
+    mask = Image.open(encoded_png_io)
+    if mask.format != 'PNG':
+        raise ValueError('Mask format not PNG')
+    mask_np = np.asarray(mask)
+    mask_remapped = (mask_np != 2).astype(np.uint8)
 
     xmins = []
     xmaxs = [] 
@@ -40,6 +96,10 @@ def create_tf_example(file_name, path_to_images, labels_df):
     ymaxs = [] 
     classes_text = [] 
     classes = [] 
+    truncated = []
+    poses = []
+    difficult_obj = []
+    masks = []
 
     filename_df = labels_df.loc[labels_df['filename'] == file_name]
     filename_df.reset_index()
@@ -52,6 +112,10 @@ def create_tf_example(file_name, path_to_images, labels_df):
             ymaxs.append(row['ymax'] / height)
             classes_text.append(row['class'].encode('utf8'))
             classes.append(class_text_to_int(row['class']))
+            truncated.append(0)
+            poses.append('Unspecified'.encode('utf8'))
+            difficult_obj.append(0)
+            masks.append(mask_remapped)
 
     tf_example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': dataset_util.int64_feature(height),
@@ -66,10 +130,13 @@ def create_tf_example(file_name, path_to_images, labels_df):
         'image/object/bbox/ymax': dataset_util.float_list_feature(ymaxs),
         'image/object/class/text': dataset_util.bytes_list_feature(classes_text),
         'image/object/class/label': dataset_util.int64_list_feature(classes),
+        'image/object/difficult': dataset_util.int64_list_feature(difficult_obj),
+        'image/object/truncated': dataset_util.int64_list_feature(truncated),
+        'image/object/view': dataset_util.bytes_list_feature(poses),
     }))
     return tf_example
 
-def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat_rate, tfrecord_dir, only_one = True):
+def generate_tf_record(imgs_dir, masks_dir, path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat_rate, tfrecord_dir, only_one = True):
     """
     Génère deux fichiers au format tfrecord dans le répertoire tfrecord_dir : deux fichiers train et test 
     nommés selon train_80_70.tfrecord pour 1000 images, dont 80% d'images avec bateau réparties à 70% dans train (et donc 30% dans test).
@@ -87,7 +154,7 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
     if not os.path.exists(tfrecord_dir):
         os.mkdir(tfrecord_dir)
 
-    saving_dir = os.path.join(tfrecord_dir,str(int(boat_rate*100))+'_'+str(int(cut_rate*100))) # subfolder de tfrecord_dir où seront stockés les tfrecords et metadonnées sur les bases créées
+    saving_dir = os.path.join(tfrecord_dir,str(int(boat_rate*100))+'_'+str(int(cut_rate*100)))+'_masks' # subfolder de tfrecord_dir où seront stockés les tfrecords et metadonnées sur les bases créées
 
     if not os.path.exists(saving_dir):
         os.mkdir(saving_dir)
@@ -245,7 +312,8 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
 
     print('Création du tfrecord train...')
     for file_name in tqdm(list_images_names_train):
-        tf_example = create_tf_example(file_name, path_images, df_train)
+        mask_name = file_name[:file_name.index('.')]+'_mask'+'.png'
+        tf_example = create_tf_example(file_name, imgs_dir, mask_name, masks_dir, df_train)
         writer_train.write(tf_example.SerializeToString())
 
     writer_train.close()
@@ -259,7 +327,8 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
 
     print('Création du tfrecord test...')
     for file_name in tqdm(list_images_names_test):
-        tf_example = create_tf_example(file_name, path_images, df_test)
+        mask_name = file_name[:file_name.index('.')]+'_mask'+'.png'
+        tf_example = create_tf_example(file_name, imgs_dir, mask_name, masks_dir, df_test)
         writer_test.write(tf_example.SerializeToString())
 
     writer_test.close()
@@ -267,16 +336,16 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
     print('Tfrecords créés avec succès !')
     print('Enregistrés dans le répertoire : '+ saving_dir)
 
-
 if __name__ == "__main__" :
 
     path_od_csv = '/tf/ship_data/train_ship_segmentations_OD.csv'
     path_h_csv = '/tf/ship_detect_tl/CSV/boats_hashV2.csv'
     path_cluster_csv = '/tf/ship_detect_tl/CSV/clusters_sizes.csv'
-    path_images = '/tf/ship_data/train_v2'
+    imgs_dir = '/tf/ship_data/train_v2'
+    masks_dir = '/tf/ship_data/masks'
     boat_rate = 0.7 # taux d'images contenant au moins un bateau
     cut_rate = 0.8 # taux d'images (par rapport à nb_images) utilisées pour train. Le reste sera utilisé pour test.
     tfrecord_dir = '/tf/ship_data/annotations' # répertoire où train et test seront créés
-    generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat_rate, tfrecord_dir)
+    generate_tf_record(imgs_dir, masks_dir, path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat_rate, tfrecord_dir)
 
     
