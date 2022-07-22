@@ -161,43 +161,16 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
 
     j = 0
     n_train_ini = len(l_train)
-    n_im_no_boat_train, n_im_no_boat_test = 0, 0 # compteurs
     for image_name in im_no_boats_sample:
         if j < int(n_train_ini*(1-boat_rate)/boat_rate):
             l_train.append(image_name)
             j+=1
-            n_im_no_boat_train+=1
         else :
             l_test.append(image_name)
-            n_im_no_boat_test+=1
 
         # On mélange les listes ainsi obtenues :
     random.shuffle(l_train)
     random.shuffle(l_test)
-
-    ###########################
-    import pickle
-    f = open('/tf/train.pkl', "wb") 
-    pickle.dump(l_train, f)
-    f.close()
-
-    f = open('/tf/test.pkl', "wb") 
-    pickle.dump(l_test, f)
-    f.close()
-    ###########################
-
-    n_im_boats_train, n_im_boats_test = len(l_train), len(l_test)
-
-        # Sauvegarde de ces informations dans un fichier txt
-    file = open(os.path.join(saving_dir,"metadata.txt"), "w")
-    if only_one:
-        file.write(f"Chaque bateau n'est réprésenté que par une image tirée aléatoirement."+"\n")
-    else :
-        file.write(f"Toutes les images représentant un bateau sont présentes."+"\n")
-    file.write(f"Taux de répartion des bateaux entre train et test : {1-n_boats_test/(n_boats_train+n_boats_test)} ({n_boats_train} dans train et {n_boats_test} dans test)."+"\n") 
-    file.write(f"Taux d'images avec bateau (train, test): {n_im_boats_train/(n_im_boats_train + n_im_no_boat_train)}, {n_im_boats_test/(n_im_boats_test + n_im_no_boat_test)}"+"\n")
-    file.write(f"Nombre d'images total : {n_im_boats_test+n_im_boats_train} (train : {n_im_boats_train}, test : {n_im_boats_test})")
-    file.close()
 
         # Enfin, on convertit ces listes de noms d'images en dataframes format pascal VOC avec les bboxs correspondantes :
     print('Création des dataframes train et test...')
@@ -234,6 +207,23 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
                 boats_h_l_test.append(boat)
     draw_distrib(boats_h_l_test, path_h_csv, 384, os.path.join(saving_dir,'test.pdf'))
 
+    # Sauvegarde de ces informations dans un fichier txt
+    
+    n_im_boats_train = df_train[df_train.xmax == df_train.xmax]['filename'].nunique()
+    n_im_no_boat_train = df_train[df_train.xmax != df_train.xmax]['filename'].nunique()
+    n_im_boats_test = df_test[df_test.xmax == df_test.xmax]['filename'].nunique()
+    n_im_no_boat_test = df_test[df_test.xmax != df_test.xmax]['filename'].nunique()
+    
+    file = open(os.path.join(saving_dir,"metadata.txt"), "w")
+    if only_one:
+        file.write(f"Chaque bateau n'est réprésenté que par une image tirée aléatoirement."+"\n")
+    else :
+        file.write(f"Toutes les images représentant un bateau sont présentes."+"\n")
+    file.write(f"Taux de répartion des bateaux entre train et test : {1-n_boats_test/(n_boats_train+n_boats_test)} ({n_boats_train} dans train et {n_boats_test} dans test)."+"\n") 
+    file.write(f"Taux d'images avec bateau (train, test): {n_im_boats_train/(n_im_boats_train + n_im_no_boat_train)}, {n_im_boats_test/(n_im_boats_test + n_im_no_boat_test)}"+"\n")
+    file.write(f"Nombre d'images total : {n_im_boats_test+n_im_boats_train} (train : {n_im_boats_train}, test : {n_im_boats_test})")
+    file.close()
+
     # 2. utiliser ce deux dataframes pour créer train.tfrecord et test.tfrecord à l'emplacement tfrecord_dir
 
         # tfrecord train
@@ -267,7 +257,6 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
     print('Tfrecords créés avec succès !')
     print('Enregistrés dans le répertoire : '+ saving_dir)
 
-
 if __name__ == "__main__" :
 
     path_od_csv = '/tf/ship_data/train_ship_segmentations_OD.csv'
@@ -278,5 +267,3 @@ if __name__ == "__main__" :
     cut_rate = 0.8 # taux d'images (par rapport à nb_images) utilisées pour train. Le reste sera utilisé pour test.
     tfrecord_dir = '/tf/ship_data/annotations' # répertoire où train et test seront créés
     generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat_rate, tfrecord_dir)
-
-    
