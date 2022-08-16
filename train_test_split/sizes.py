@@ -54,6 +54,11 @@ def draw_distrib(boats_h_l, path_h_csv, nb_bar, saving_path):
 def clusters_sizes_csv(path_clust_csv, path_h_csv, path_new_csv):
     """
     Crée un csv avec pour chaque cluster, identifié par un entier, la largeur moyenne (W_mean), hauteur moyenne (H_mean) et le nombre de bateau présents dans le cluster.
+
+    :param path_clust_csv: str, chemin du csv des clusters
+    :param path_h_csv: str, chemin du csv contenant les BoatHash
+    :param path_new_csv: str, chemin du csv qui va être ainsi créé.
+    :return: Void.
     """
 
     df_clust = pd.read_csv(path_clust_csv)

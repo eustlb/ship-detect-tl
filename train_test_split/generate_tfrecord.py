@@ -7,7 +7,7 @@ from tqdm import tqdm
 from object_detection.utils import dataset_util
 import random
 import random
-from sizesV2 import draw_distrib
+from sizes import draw_distrib
 
 def class_text_to_int(row_label):
     """
@@ -80,6 +80,7 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
     :param cut_rate: float, pourcentage d'images utilisées pour former le tfrecord train. Le tfrecord test sera formé avec les images restantes.
     :param boat_rate: float, pourcentage du nombre total d'images qui doit contenir au moins un bateau
     :param tfrecord_dir: str, répertoire où seront créés les tf records
+    :param only_one: bool, default True pour ne sélectionner qu'une seule des images représentant un bateau.
     :return: Void
     """
 
@@ -258,8 +259,7 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat
     print('Enregistrés dans le répertoire : '+ saving_dir)
 
 if __name__ == "__main__" :
-
-    path_od_csv = '/tf/ship_data/train_ship_segmentations_OD.csv'
+    path_od_csv = '/tf/ship_data/train_ship_segmentations_OD.csv' 'A REMPLACER'
     path_h_csv = '/tf/ship_detect_tl/CSV/boats_hashV2.csv'
     path_cluster_csv = '/tf/ship_detect_tl/CSV/clusters_sizes.csv'
     path_images = '/tf/ship_data/train_v2'

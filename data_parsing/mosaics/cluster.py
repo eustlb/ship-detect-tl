@@ -15,7 +15,7 @@ T = 5 # threeshold variable, will be used to tell if to images are to be conside
 
 def find_duplicate(img_name, crop_number1, crop_number2, img_list):
     """
-    Prends une image, deux numéros de crops (cf. build_crops.py) et une liste d'images dans laquelle chercher un voisin, 
+    Prend une image, deux numéros de crops (cf. build_crops.py) et une liste d'images dans laquelle chercher un voisin, 
     c'est-à-dire une image dont une partie recouvrerait une partie de l'image de départ.
     On cherche ici une image dont le crop_number2 correspondra au crop_number1 de l'image de départ.
 
@@ -54,6 +54,17 @@ def exists_neighbor(img_name, direction, img_list):
         return find_duplicate(img_name, 5, 4, img_list)
 
 def expand_cluster(img_name, img_list):
+    """
+    Prend un nom d'image et cherche en partant de cette image à former son cluster.
+    Les voisins et donc le cluster est cherché dans la liste d'images img_list.
+    Le système de coordonnées utilisé est le suivant. L'image de départ à pour coordonnées (0,0).
+    Un mouvement selon le pas de 256 pixels équivaut à un +1/-1 dans les coordonnées dans la direction
+    évidente (on passe de (0,0) a (0,1) pour un mouvement vers le nord par exemple).
+
+    :param img_name: str, nom de l'image de départ.
+    :param img_list: list, liste des images dans laquelle chercher à former le cluster.
+    :return cluster: list, liste de tuples nom d'image et coordonnées correspondant au cluster formé.
+    """
 
     cluster = [(img_name,(0,0))]
 
@@ -66,13 +77,7 @@ def expand_cluster(img_name, img_list):
 
     while len(to_explore) != 0  :
 
-        # print('reste à explorer : ' + str(len(to_explore)))
-        # print('dans un liste de : '+str(len(img_list_copy)))
-
         img_spot_name, coords = to_explore.pop()
-
-        # print("exploring at coords : "+str(coords))
-        # print('\n')
 
         for dir in ['N', 'S', 'O', 'E'] :
             if exists_neighbor(img_spot_name, dir, img_list)[0]:
@@ -91,7 +96,16 @@ def expand_cluster(img_name, img_list):
 
     return cluster
 
-def rebuild_mosaic(cluster):
+def rebuild_mosaic(cluster, dir):
+    """
+    Cette fonction permet, à partir d'un cluster construit par expand_cluster, de reconstruire
+    l'image initale et de l'enregistrer dans le répertoire donné.
+    Le nom de cette image sera formée à partir de l'image de départ du cluster (donc de coordonnées (0,0))
+
+    :param cluster: list, liste des tuples images, coordonnées du cluster dont on veut former l'image.
+    :param dir: str, répertoire où sera enregistrée l'image.
+    :return: Void.
+    """
 
     i_max = max([el[1][0] for el in cluster])
     i_min = min([el[1][0] for el in cluster])
@@ -116,9 +130,15 @@ def rebuild_mosaic(cluster):
         if el[1][0]==0 and el[1][1]==0:
             base_name = el[0][:el[0].index('.')]
     
-    cv2.imwrite('/tf/mosaic/'+str(base_name)+'_mosaic.png',mosaic)
+    cv2.imwrite(os.path.join(dir,str(base_name)+'_mosaic.png'),mosaic)
 
 def main(img_list):
+    """
+    Permet la répartition du calcul sur les 96 coeurs par multiprocessing.
+
+    :param img_list: list, liste des noms d'images à partir de laquelle on va reformer les images de départ.
+    :return: Void.
+    """
 
     clusters_list = []
     num_workers = 96

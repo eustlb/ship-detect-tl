@@ -4,7 +4,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import pickle
 import numpy as np
 
-H = 768
+H = 768 
 W = 768
 
 def rle2bbox(rle, shape):
@@ -68,7 +68,7 @@ def hash_boats_rle(path_to_csv, path_new_csv):
     Prends le CSV de départ, c'est-a-dire qui associe à une image le(s) rle du bateau(x) qu'elle contient, 
     et crée un nouveau CSV, analogue au premier mais ou chaque rle à été transformé d'abord en son rle normalisé,
     puis en un entier grâce à une fonction de hashage (afin d'être ensuite comparables). 
-    Seront également présent dans le CSV le rle (afin de savoir de quel bateau on parle),
+    Seront également présent dans le CSV le rle (afin de savoir de quel bateau et sur quelle image on parle),
     la largeur (W) et hauteur (H) du bateau.
 
     :param path_to_csv: str, path du csv de départ, csv d'origine fourni dans la base kaggle.
@@ -92,8 +92,28 @@ def hash_boats_rle(path_to_csv, path_new_csv):
     df = pd.DataFrame.from_dict(hash_dict)
     pd.DataFrame.to_csv(df, path_new_csv)
 
+def imgs_per_b_csv(path_hash_csv, path_new_csv):
+    """
+    Genère le CSV de toutes les images qui contiennent un certain bateau (identifié par son hash).
+
+    :param path_hash_csv: str, chemin du csv généré par hash_boats_rle
+    :param path_new_csv: str, chemin du nouveau csv qui va être créé.
+    :return: Void.
+    """
+    df_hash = pd.read_csv(path_hash_csv)
+    boats = df_hash['BoatHash'].unique()
+    boats_h_dict = {'BoatHash':[], 'ImageIds':[]}
+    for boat in tqdm(boats) : 
+        imgs = [img for img in df_hash[df_hash.BoatHash == boat]['ImageId']]
+        imgs_str = ' '.join(imgs)
+        boats_h_dict['BoatHash'].append(boat)
+        boats_h_dict['ImageIds'].append(imgs_str)
+    df = pd.DataFrame.from_dict(boats_h_dict)
+    pd.DataFrame.to_csv(df, path_new_csv)
+
 def find_cluster(boat_h, cluster, known_boats, df_hash):
     """
+    Renvoie la liste d'images qui forme le cluster composé en partant d'un boat_h.
     Utilisé de façon récursive. Les listes de départ cluster et know_boats doivent être vides au premier appel de la fonction.
     Principe :
     Lorsque appelée sur un certain boat_h, elle ajoute au cluster toutes les images qui contiennent ce bateau et qui ne sont pas encore dans le cluster.
@@ -113,19 +133,16 @@ def find_cluster(boat_h, cluster, known_boats, df_hash):
                 find_cluster(boat_h, cluster, known_boats, df_hash)
     return cluster
 
-def to_edges(l):
-    """ 
-        treat `l` as a Graph and returns it's edges 
-        to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
-    """
-    it = iter(l)
-    last = next(it)
-
-    for current in it:
-        yield last, current
-        last = current  
-
 def find_clusters(path_csv):
+    """
+    Renvoie les clusters formés en traitant le problème comme un problème réseau.
+    On considère les images contenant un même bateau comme des sommets reliés d'un graphe.
+    Ainsi, il s'agit de former des clusters contenant des sommets connectés entre eux et isolés du reste des sommets.
+    Cela revient à chercher à fusionner des listes qui partagent des éléments.
+
+    :param path_csv: str, chemin du csv formé par imgs_per_b_csv
+    :return out: list, liste des clusters (qui sont des listes de noms d'images) formés.
+    """
     # creer la liste des imgs par bateau : 
     df = pd.read_csv(path_csv)
     l = []
@@ -134,6 +151,8 @@ def find_clusters(path_csv):
 
     out = []
 
+    # algorithme qui permet de fusionner des listes qui partagent des éléments. 
+    # pris sûr : https://stackoverflow.com/questions/4842613/merge-lists-that-share-common-elements
     while len(l)>0:
         first, *rest = l
         first = set(first)
@@ -158,23 +177,26 @@ def find_clusters(path_csv):
     return out
 
 def main1():
+    """
+    Permet de calculer par multiprocessing (ici sur 96 coeurs) l'ensemble des clusters que l'on peut former à partir de la base de départ.
+    Principe : 
+    Sera éxectué sur chaque coeur :
+    - On appelle la fonction find_cluster sur un boat_h. On obient ainsi un cluster d'images.
+    - Toutes les images de ce cluster sont supprimés du dataframe de départ permettant de chercher les clusters.
+    - On recommence avec le boat_suivant, jusqu'à avoir tout traité. 
+    """
+
     df_hash = pd.read_csv('/tf/ship_data/boats_hash.csv')
-    # df_hash = df_hash[df_hash.ImageId in df_hash['ImageId'].unique()[:10]]
     num_workers = 96
-
     clusters = []
-
     executor = ProcessPoolExecutor(max_workers=num_workers)
     futures = [executor.submit(find_cluster, boat_h, [], [], df_hash) for boat_h in df_hash['BoatHash'].unique()[:num_workers]]
-
 
     i = 0
     prev_len, j = len(df_hash['BoatHash'].unique()), 0 # utilisé pour faire des sauvegardes du travail effectué tous les 10000 clusters créés
 
     while len(df_hash['BoatHash'].unique()) != 0:
-
         for future in futures:
-
             if future.done():
     
                 cluster = future.result()
@@ -209,7 +231,7 @@ def main2():
     for cluster in clusters:
         l = []
         for el in cluster:
-            l.append(l)
+            l.append(el)
         cluster = l
 
     print(clusters[0][0])
@@ -220,5 +242,9 @@ def main2():
 
 if __name__ == '__main__':
     path_to_csv = '/tf/ship_data/train_ship_segmentations_v2.csv'
-    path_new_csv = '/tf/ship_data/find_duplicates/hash/boats_hashV2.csv'
-    hash_boats_rle(path_to_csv, path_new_csv)
+    path_new_csv = '/tf/ship_data/find_duplicates/hash/boats_hash.csv'
+    # hash_boats_rle(path_to_csv, path_new_csv)
+
+    rle = '86727 2 87493 4 88261 4 89030 3 89798 4 90566 4 91334 4 92103 3 92871 1'
+
+    print(hash(normalized_rle(rle)))

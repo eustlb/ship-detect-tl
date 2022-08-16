@@ -2,12 +2,15 @@ import pickle
 import pandas as pd
 from tqdm import tqdm
 
-# ==============================================================================
-
 def big_clust(cluster):
     """
-    Prends un cluster et revoie le cluster l'index (parmis ceux trouvés par la méthode mosaic, liste de noms d'images aussi) le plus grand qui contient cette image.
+    Prends un cluster (trouvé par la méthode réseau) et renvoie l'index du cluster 
+    (parmis ceux trouvés par la méthode mosaic, liste de noms d'images aussi) le plus 
+    grand qui contient au moins une image de ce cluster.
     S'il n'y en a pas, renvoie -1.
+
+    :param cluster: list, liste d'images correspondant à un cluster
+    :return: l'index du grand cluster, -1 s'il n'y en a pas.
     """
     with open("/tf/ship_data/find_duplicates/mosaics/clusters/clusters_clean_2.pkl", "rb") as fp:   # Unpickling
         mosaic_clusters = pickle.load(fp)
@@ -27,7 +30,7 @@ def big_clust(cluster):
 
 def big_clust_csv():
     """
-    Crée le csv qui associe à chaque cluster trouvé par la méthode des hashs son 'big_clust'
+    Crée le csv qui associe à chaque cluster trouvé par la méthode des hashs son 'big_clust'.
     """
     df_cluster_h = pd.read_csv('/tf/ship_data/find_duplicates/hash/clusters.csv')
     big_clust_dict = {'ClusterId':[], 'Images':[], 'BigClustIndex':[]}
@@ -42,7 +45,11 @@ def big_clust_csv():
     pd.DataFrame.to_csv(df, '/tf/ship_data/find_duplicates/reassemble_cluster/big_clust.csv')
 
 def reassemble_clusters():
-
+    """
+    Si deux clusters trouvés par la méthode réseau possèdent le même "big_clust",
+    c'est-à-dire qu'ils appartiennent à la même image satellite de départ,
+    alors ils doivent être rassemblés en un même cluster.
+    """
     df_cluster_h = pd.read_csv('/tf/ship_data/find_duplicates/reassemble_cluster/big_clust.csv')
     index_l = df_cluster_h['BigClustIndex'].unique().tolist()
     index_l.remove(-1)
@@ -64,7 +71,11 @@ def reassemble_clusters():
 
 def cluster_csv(clusters, path_h_csv, path_new_csv):
     """
-    Crée un csv qui associe a chaque cluster un identifiant (entier), les images contenues et les bateaux contenus
+    Crée un csv qui associe a chaque cluster des clusters reassemblés, un identifiant (entier), les images contenues et les bateaux contenus.
+
+    :param clusters: list, liste des clusters reassemblés
+    :param path_h_csv: str, chemin du csv des BoatHash.
+    :param path_new_csv: str, chemin où sera sauvegardé ce nouveau csv.
     """
 
     df_h = pd.read_csv(path_h_csv)

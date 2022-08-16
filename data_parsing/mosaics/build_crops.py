@@ -8,7 +8,7 @@ dir = '/tf/imgs_crops'
 def build_crops(img_path):
     """
     Prends le path d'une image et renvoie la liste de ces neuf crops. 
-    Un crop est un carré de 256x256pixs, réduit a un carré de 6x6pixs en utilisant l'interpolation inter_area.
+    Un crop est un carré de 256x256 pixels, réduit a un carré de 6x6pixs en utilisant l'interpolation inter_area.
     Une image à donc 9 crops car on se déplace avec un pas de 256pix.
     Les crops sont numérotés de 1 à 9 gauche à droite et de base en haut.
 
@@ -25,7 +25,7 @@ def build_crops(img_path):
             crops.append(crop)
     return crops
 
-def build_crops(dir, saving_dir):
+def build_all_crops(dir, saving_dir):
     """
     Construit les 9 crops de chaque image présente dans dir et les enregistre dans le répertoire saving_dir.
 
@@ -43,4 +43,4 @@ def build_crops(dir, saving_dir):
 if __name__ == '__main__':
     dir = '/tf/ship_data/train_v2'
     saving_dir = '/tf/imgs_crops'
-    build_crops(dir,saving_dir)
+    build_all_crops(dir,saving_dir)

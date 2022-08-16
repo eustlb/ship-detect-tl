@@ -3,7 +3,6 @@ import os
 import pandas as pd
 import cv2
 
-
 def resize(image_dir, path_original_csv, resize_format, new_image_dir):
     """
     Redimensionne des images et crée le csv au format pascal VOC correspondant.
