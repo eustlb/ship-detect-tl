@@ -39,6 +39,14 @@ Sauvegarde au format binaire à partir du module pickle de python de la liste de
 Généré par la fonction cluster_csv du module reassemble_cluster.py
 Fichier csv qui décrit les clusters de clusters_reassembled.pkl, c'est-à-dire les clusters finaux qui seront utilisés pour le split train/test. Associe à chaque cluster les images qu'il contient ainsi que les bateaux contenus (identifiés par leur BoatHash).
 
+* train_ship_segmentation_OD.csv : 
+Généré par la fonction generate_od_csv du module generate_od_csv.py
+Fichier csv au format pascal VOC pour la détection d'objets.
+
+* cluster_sizes.csv : 
+Généré par la fonction cluster_sizes_csv du module sizes.py.
+Fichier CSV qui associe à chaque cluster les largeur et hauteur moyennes des bateaux qu'ils contient ainsi que leur nombre. 
+
 
 
 

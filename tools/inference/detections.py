@@ -15,7 +15,7 @@ def save_image_bbox(img_path, saving_path, bboxs, scores):
 
     :param img_path: str, path de l'image à éditer
     :param saving_path: str, path où sera enregistrée l'image 
-    :param bboxs: list, liste de bboxs au format [[ymin, xmin, ymax, xmax]]
+    :param bboxs: list, liste de bboxs au format [[ymin_rate, xmin_rate, ymax_rate, xmax_rate]] (valeurs relatives : xmin_rate=xmin/w)
     :param scores: list, liste des scores au format [0.8]
     :return: Void.
     """

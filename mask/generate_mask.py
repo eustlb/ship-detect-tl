@@ -60,19 +60,13 @@ def main2():
   mask_dir = '/tf/ship_data/masks_only_one_image'
   df_origin =  pd.read_csv('/tf/ship_data/train_ship_segmentations_v2.csv')
 
-  # for img_name in tqdm(df_origin['ImageId'][], total=df_origin.shape[0]):
-  #   rle_l = [rle for rle in df_origin[df_origin.ImageId == img_name]['EncodedPixels']]
-  #   mask_name = img_name[:img_name.index('.')]+'_mask'+'.png'
-
-  for img_name in ['000194a2d.jpg']:
+  for img_name in tqdm(os.listdir('/tf/ship_data/train_v2')):
     rle_l = [rle for rle in df_origin[df_origin.ImageId == img_name]['EncodedPixels']]
     mask_name = img_name[:img_name.index('.')]+'_mask'+'.png'
-  
-  imgToMaskPNG(rle_l, 768, 768, mask_dir, mask_name)
+    imgToMaskPNG(rle_l, 768, 768, mask_dir, mask_name)
 
 
 if __name__ == '__main__':
-
   main2()
 
   
