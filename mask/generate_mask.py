@@ -35,7 +35,16 @@ def imgToMaskPNG(rleStringL,height,width,mask_dir,mask_name):
   im = Image.fromarray(img)
   im.save(os.path.join(mask_dir, mask_name))
 
-def main1():
+def generate_mask_rle(img_l, mask_dir, path_to_csv):
+  """
+  Créer les images masque à partir des images présentes dans img_dir.
+  Les masques enrégistrés sont au format png.
+  Il y aura un masque par bateau, c'est à dire un masque pour chaque rle de l'image !
+
+  :param img_l: list, liste des images dont on souhaite créer les masques.
+  :param mask_dir: str, répertoire où seront créés les masques
+  :param path_to_csv: str, chemin du csv original qui comporte les rle.
+  """
 
   # empty image when no boats
   empty_mask = np.zeros(768*768,dtype=np.uint8)
@@ -43,10 +52,9 @@ def main1():
   empty_mask = empty_mask.T
   empty_mask = Image.fromarray(empty_mask)
 
-  mask_dir = '/tf/ship_data/masks'
-  df_origin =  pd.read_csv('/tf/ship_data/train_ship_segmentations_v2.csv')
+  df_origin =  pd.read_csv(path_to_csv)
 
-  for img_name in tqdm(df_origin['ImageId'], total=df_origin.shape[0]):
+  for img_name in tqdm(img_l):
     rle_l = [rle for rle in df_origin[df_origin.ImageId == img_name]['EncodedPixels']]
     i = 1 
     for rle in rle_l:
@@ -55,18 +63,26 @@ def main1():
       if rle == rle:
         rleToMaskPNG(rle, 768, 768, mask_dir, mask_name)
 
-def main2():
+def generate_mask_img(img_l, mask_dir, path_to_csv):
+  """
+  Créer les images masque à partir des images présentes dans img_dir.
+  Les masques enrégistrés sont au format png.
+  Il y aura un masque par image, l'ensemble des bateaux contenus dans l'image apparaîtra sur le même masque.
 
-  mask_dir = '/tf/ship_data/masks_only_one_image'
-  df_origin =  pd.read_csv('/tf/ship_data/train_ship_segmentations_v2.csv')
+  :param img_l: list, liste des images dont on souhaite créer les masques.
+  :param mask_dir: str, répertoire où seront créés les masques
+  :param path_to_csv: str, chemin du csv original qui comporte les rle.
+  """
 
-  for img_name in tqdm(os.listdir('/tf/ship_data/train_v2')):
+  df_origin =  pd.read_csv(path_to_csv)
+
+  for img_name in tqdm(img_l):
     rle_l = [rle for rle in df_origin[df_origin.ImageId == img_name]['EncodedPixels']]
     mask_name = img_name[:img_name.index('.')]+'_mask'+'.png'
     imgToMaskPNG(rle_l, 768, 768, mask_dir, mask_name)
 
 
 if __name__ == '__main__':
-  main2()
+  print()
 
   

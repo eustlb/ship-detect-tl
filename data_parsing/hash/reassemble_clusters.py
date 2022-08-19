@@ -12,7 +12,7 @@ def big_clust(cluster):
     :param cluster: list, liste d'images correspondant à un cluster
     :return: l'index du grand cluster, -1 s'il n'y en a pas.
     """
-    with open("/tf/ship_data/find_duplicates/mosaics/clusters/clusters_clean_2.pkl", "rb") as fp:   # Unpickling
+    with open("/tf/ship_data/find_duplicates/mosaics/clusters/clusters_clean.pkl", "rb") as fp:   # Unpickling
         mosaic_clusters = pickle.load(fp)
     
     set_clust = set(cluster)
@@ -99,8 +99,8 @@ if __name__ == "__main__":
     with open("/tf/ship_data/find_duplicates/reassemble_cluster/cluster_reassembled.pkl", "rb") as fp:   # Unpickling
          clusters = pickle.load(fp)
 
-    path_h_csv = '/tf/ship_data/find_duplicates/hash/boats_hashV2.csv'
-    path_new_csv = '/tf/ship_data/find_duplicates/hash/clustersV2.csv'
+    path_h_csv = '/tf/ship_data/find_duplicates/hash/boats_hash.csv'
+    path_new_csv = '/tf/ship_data/find_duplicates/hash/clusters.csv'
 
     cluster_csv(clusters, path_h_csv, path_new_csv)
 

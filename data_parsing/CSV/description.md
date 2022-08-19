@@ -47,6 +47,17 @@ Fichier csv au format pascal VOC pour la détection d'objets.
 Généré par la fonction cluster_sizes_csv du module sizes.py.
 Fichier CSV qui associe à chaque cluster les largeur et hauteur moyennes des bateaux qu'ils contient ainsi que leur nombre. 
 
+* clusters.pkl
+Généré par la fonction main du module cluster.py
+Sauvegarde au format binaire à partir du module pickle de python de la liste des clusters généré par l'approche mosaïque, c'est-à-dire celle qui tente de reconstruire les images satellites.
+Beaucoup de duplicatas de clusters présents, dus à l'approche multiprocessing où certain cluster ont été trouvés en parallèle par plusieurs coeurs de calcul.
+
+* clusters_clean.pkl 
+Généré par le module clean_cluster.py
+Sauvegarde au format binaire à partir du module pickle de python de la liste des clusters généré par l'approche mosaïque, version "propre" où les duplicatas décrits ci-dessus ont été supprimés.
+
+
+
 
 
 

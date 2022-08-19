@@ -52,8 +52,12 @@ class Image:
     def transform(self, k, rot):
         """
         Applique soit pas de modification géométrique(k=0), soit une symétrie selon l'axe des abscisses (k=1), soit une symétrie selon l'axe des ordonnées(k=2).
-        Applique également les transformations de flou, de teinte, de luminosité et de constraste ayant toutes pour probabilité 0.5 d'être appliquées à notre objet.
+        Applique également les transformations niveau pixels de flou, de teinte, de luminosité et de constraste ayant toutes pour probabilité 0.5 d'être appliquées à notre objet.
         Applique également une rotation multiple de 90° dans le sens trigo.
+        Nomenclature : une image augmentée aura un nom de la forme 567261abb_t_vert_rot90.jpg
+        - t : signifie que l'image a été transformée (niveau pixels), c'est à dire qu'au moins une des quatre transformations ci-dessus a été appliquée.
+        - vert/ horiz : signique qu'une symétrie selon l'axe des ordonnées (vert) ou selon l'axe des abscisses (horiz) a été appliquée.
+        - rot90/rot180/rot270 : signique qu'une rotation de l'angle donné dans le sens trigo a été effectuée.
 
         :paramp vert_p: float, probabilité d'appliquer une symétrie selon l'axe des abscisses.
         :param hori_p: float, probabilité d'appliquer une symétrie selon l'axe des ordonnées.
@@ -128,7 +132,7 @@ class Image:
         if mask_saving_dir is not None:
             cv2.imwrite(os.path.join(mask_saving_dir, self.mask_name), self.mask)
 
-def augment(img_name, img_dir, mask_dir, img_saving_dir, mask_saving_dir, path_od_csv):
+def augment_img(img_name, img_dir, mask_dir, img_saving_dir, mask_saving_dir, path_od_csv):
     """
     Procède à la creation de 7 images 'augmentées' à partir d'une image de départ, des masques corresponds ainsi que  
     Ces 7 images correspondent aux 7 possibles transformations de type symétrie axiale ou rotation faisables,
@@ -184,37 +188,54 @@ def augment(img_name, img_dir, mask_dir, img_saving_dir, mask_saving_dir, path_o
     # return the new dataframe with new bbox coordinates
     return pd.concat([img_obj1.df, img_obj2.df, img_obj3.df, img_obj4.df, img_obj5.df, img_obj6.df, img_obj7.df])
 
-def main(img_dir, img_saving_dir, mask_saving_dir, path_od_csv, path_new_od_csv):
+def augment(img_l, img_dir, img_saving_dir, mask_dir, mask_saving_dir, path_od_csv, path_new_od_csv):
     """
     Effectue l'augmentation de donnée décrite ci-dessus (images et masques) et sauvegarde le csv correspondant.
 
-    :param img_dir: str, répertoire où se trouvent les images originales.
+    :param img_l: list, liste des noms d'images à augmenter.
+    :param img_dir: str, répertoire où se trouvent les images.
     :param img_saving_dir: str, répertoire où seront enregistrées les nouvelles images.
+    :param mask_dir: str, répertoire où se trouvent les masques des images.
     :param mask_saving_dir: str, répertoire où seront enregistrées les masques correspondants.
     :param path_od_csv: str, chemin du CSV au format pascal VOC.
     :param path_new_od_csv: str, chemin où sera enregistré le nouveau csv.
     :return: Void.
     """
+    #########
+    # Sur certaines image (une dizaine), les valeurs de xmin et xmax / ymin et ymax sont les mêmes, ce qui génère des erreurs
+    # Il faut donc supprimer du dataframe de départ les lignes correspondantes
+    df= pd.read_csv(path_od_csv)
+    for index, row in df.iterrows():
+        if row['xmax'] == row['xmin'] or row['ymax'] == row['ymin']:
+            df = df.drop(index)
+
+    df.to_csv(path_od_csv, index=False)
+    #########
     
     df_list = []
 
-    for img_name in tqdm(os.listdir(img_dir)):
-        df = augment(img_name, img_dir, mask_dir, img_saving_dir, mask_saving_dir, path_od_csv)
+    for img_name in tqdm(img_l):
+        df = augment_img(img_name, img_dir, mask_dir, img_saving_dir, mask_saving_dir, path_od_csv)
         df_list.append(df)
     
-    pd.concat(df_list, ignore_index=True).to_csv(path_new_od_csv)
+    pd.concat(df_list, ignore_index=True).to_csv(path_new_od_csv, index=False)
 
-   
 if __name__ == '__main__':
 
+    path_train_csv = '/tf/ship_data/annotations/70_80/train_70_80.csv'
+    df_train = pd.read_csv(path_train_csv)
+    train_img_l = df_train[df_train.xmax == df_train.xmax]['filename'].unique()
+
+    img_l = ['00021ddc3.jpg']
     img_dir = '/tf/ship_data/train_v2'
     mask_dir = '/tf/ship_data/masks_only_one_image'
-    img_saving_dir = '/tf/ship_data/augmented_data/imgs'
-    mask_saving_dir = '/tf/ship_data/augmented_data/masks'
+    img_saving_dir = '/tf/test/results'
+    mask_saving_dir = '/tf/test/masks'
     path_od_csv = '/tf/ship_detect_tl/data_parsing/CSV/train_ship_segmentations_OD.csv'
-    path_new_od_csv = '/tf/ship_data/augmented_data/augmented_data_OD.csv'
+    path_new_od_csv = '/tf/test/augmented_data_OD.csv'
 
-    main(img_dir, img_saving_dir, mask_saving_dir, path_od_csv, path_new_od_csv)
+    augment(img_l, img_dir, img_saving_dir, mask_dir, mask_saving_dir, path_od_csv, path_new_od_csv)
+
 
 
         
