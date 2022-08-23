@@ -65,3 +65,5 @@ The different steps are described in the notebook main.ipynb :
 ### 5. masks & image_segmentation
 
 ...
+
+## A few results
