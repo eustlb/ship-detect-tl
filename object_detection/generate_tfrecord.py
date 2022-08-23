@@ -259,6 +259,43 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, imgs_dir, cut_
     print('Tfrecords créés avec succès !')
     print('Enregistrés dans le répertoire : '+ saving_dir)
 
+def generate_tf_record_augmented(path_train_csv, path_aug_csv, imgs_dir, imgs_dir_aug, tf_record_name, tf_record_dir):
+    """
+    Génère le tf_record avec les données augmentées. Il ne s'agit que du tf_record d'entrainement puisque seules ses images ont été augmentés.
+    Le tf_record sera donc le même que celui de la base d'entraînement qui a été augmentée à laquelle on ajoute les images augmentées.
+
+    :param path_train_csv: str, chemin du csv de la base d'entraînement qui a été augmentée.
+    :param path_aug_csv: str, chemin du csv de la base augmentée.
+    :param imgs_dir: str, répertoire où sont les images de la base d'entraînement.
+    :param imgs_dir_aug: str, répertoire où sont les images augmentées.
+    :param tf_record_name: str, nom du tf_record créé.
+    :param tf_record_dir: str, répertoire où sera créé le tf_record.
+    :return: Void.
+    """
+
+    # concaténer les dataframes de la base train et des images augmentées
+
+    df_train = pd.read_csv(path_train_csv)
+    df_aug = pd.read_csv(path_aug_csv)
+
+    # créer le tf_example correspondant
+
+    filename = tf_record_name
+
+    writer_train = tf.io.TFRecordWriter(os.path.join(tf_record_dir,filename))
+    l_images_names_train = df_train['filename'].unique()
+    l_images_names_aug = df_aug['filename'].unique()
+
+    for file_name in tqdm(l_images_names_train):
+        tf_example = create_tf_example(file_name, imgs_dir, df_train)
+        writer_train.write(tf_example.SerializeToString())
+    
+    for file_name in tqdm(l_images_names_aug):
+        tf_example = create_tf_example(file_name, imgs_dir_aug, df_aug)
+        writer_train.write(tf_example.SerializeToString())
+
+    writer_train.close()
+
 if __name__ == "__main__" :
     path_od_csv = '/tf/ship_detect_tl/data_parsing/CSV/train_ship_segmentations_OD.csv'
     path_h_csv = '/tf/ship_detect_tl/data_parsing/CSV/boats_hash.csv'
@@ -267,4 +304,14 @@ if __name__ == "__main__" :
     boat_rate = 0.7 # taux d'images contenant au moins un bateau
     cut_rate = 0.8 # taux d'images (par rapport à nb_images) utilisées pour train. Le reste sera utilisé pour test.
     tfrecord_dir = '/tf/ship_data/annotations' # répertoire où train et test seront créés
-    generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, imgs_dir, cut_rate, boat_rate, tfrecord_dir)
+    # generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, imgs_dir, cut_rate, boat_rate, tfrecord_dir)
+
+    # création du tf_record de la base augmentée.
+    path_train_csv = '/tf/ship_data/annotations/70_80/train_70_80.csv'
+    path_aug_csv = '/tf/ship_data/augmented_data/augmented_data_OD.csv'
+    imgs_dir = '/tf/ship_data/train_v2'
+    imgs_dir_aug = '/tf/ship_data/augmented_data/imgs'
+    tf_record_name = 'train_aug_70_80.tfrecord'
+    tf_record_dir = '/tf/ship_data/annotations/70_80'
+    generate_tf_record_augmented(path_train_csv, path_aug_csv, imgs_dir, imgs_dir_aug, tf_record_name, tf_record_dir)
+    

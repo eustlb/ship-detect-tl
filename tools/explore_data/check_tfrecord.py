@@ -11,14 +11,17 @@ def check_tfrecord(tfrecord_path):
 
     raw_dataset = tf.data.TFRecordDataset(tfrecord_path)
 
-    for raw_record in raw_dataset.take(1):
-        example = tf.train.Example()
-        example.ParseFromString(raw_record.numpy())
-        for key, feature in example.features.feature.items():
-            if key != 'image/encoded':
-                print(key)
-                print(feature)
+    i=0
+    for raw_record in raw_dataset.take(70000):
+        i+=1
+        if i == 69999 :
+            example = tf.train.Example()
+            example.ParseFromString(raw_record.numpy())
+            for key, feature in example.features.feature.items():
+                if key != 'image/encoded':
+                    print(key)
+                    print(feature)
 
 if __name__=='__main__':
-    tfrecord_path = '/tf/ship_data/annotations/100_80_90/train_100_80_90.tfrecord'
+    tfrecord_path = '/tf/ship_data/annotations/70_80/train_aug_70_80.tfrecord'
     check_tfrecord(tfrecord_path)

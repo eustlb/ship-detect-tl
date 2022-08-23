@@ -1,15 +1,11 @@
-Postulat : à chaque bateau du jeu de donnée correspond une unique forme. Deux bateau ayant la même forme désignent le même bateau.
+> Postulat : à chaque bateau du jeu de donnée correspond une unique forme. Deux bateau ayant la même forme désignent le même bateau.
 
-Chaque bateau contenus par les images est décrit par un RLE (run-length-encoding)
-Le format RLE porte deux informations :
-1 - la forme du bateau
-2 - sa position dans l'image
-La première est unique au sein du jeu de donnée (cf. postulat), la deuxième diffère selon les images.
-Ainsi un même bateau peut avoir un RLE différent s'il est présent sur deux images.
-Par conséquent, on considère donc que la première de ces deux informations identifie de façon unique un bateau du jeu de données. 
+    Chaque bateau contenus par les images est décrit par un RLE (run-length-encoding)
+    Le format RLE porte deux informations :
+    1 - la forme du bateau 
+    2 - sa position dans l'image
+    La première est unique au sein du jeu de donnée (cf. postulat), la deuxième diffère selon les images.Ainsi un même bateau peut avoir un RLE différent s'il est présent sur deux images.Par conséquent, on considère donc que la première de ces deux informations identifie de façon unique un bateau du jeu de données. En tirant du RLE de chaque bateau la forme désignée, on identifie donc ce bateau de façon unique. Cet identifiant, un entier généré à partir de cette information à l'aide d'une fonction de hachage, sera nommé BoatHash.
 
-En tirant du RLE de chaque bateau la forme désignée, on identifie donc ce bateau de façon unique. 
-Cet identifiant, un entier généré à partir de cette information à l'aide d'une fonction de hachage, sera nommé BoatHash.
 
 * boats_hash.CSV :
 Généré par la fonction hash_boat_rle du module img_hash.py

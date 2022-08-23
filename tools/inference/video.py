@@ -179,19 +179,19 @@ if __name__ == '__main__':
     video_path = '/tf/ship_data/archives/video/images_drone_brise_lame/vol_drone.MP4'
     saving_dir = '/tf/video'
     nb_images = 3600
-    extract_im_video(video_path,saving_dir,nb_images)
+    # extract_im_video(video_path,saving_dir,nb_images)
 
     origin_frames_dir = '/tf/video'
     saving_dir = '/tf/video_crop'
-    adapt_frames(origin_frames_dir, saving_dir)
+    # adapt_frames(origin_frames_dir, saving_dir)
 
-    checkpoint_path = '/tf/custom_models/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/checkpoint/ckpt-51'
-    pipeline_path = '/tf/custom_models/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/pipeline.config'
+    checkpoint_path = '/tf/custom_models/faster_rcnn_resnet101_v1_1024x1024_coco17_tpu-8/checkpoint/ckpt-26'
+    pipeline_path = '/tf/custom_models/faster_rcnn_resnet101_v1_1024x1024_coco17_tpu-8/pipeline.config'
     img_dir = '/tf/video_crop'
     img_names = os.listdir(img_dir)
     thresh = 0.5
     saving_dir = '/tf/video_predi'
-    predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir)
+    # predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir)
 
     video_dir = '/tf/video_predi'
     saving_dir = '/tf/tests'

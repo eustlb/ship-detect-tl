@@ -203,7 +203,7 @@ def augment(img_l, img_dir, img_saving_dir, mask_dir, mask_saving_dir, path_od_c
     """
     #########
     # Sur certaines image (une dizaine), les valeurs de xmin et xmax / ymin et ymax sont les mêmes, ce qui génère des erreurs
-    # Il faut donc supprimer du dataframe de départ les lignes correspondantes
+    # Il faut donc les supprimer du dataframe de départ les lignes correspondantes
     df= pd.read_csv(path_od_csv)
     for index, row in df.iterrows():
         if row['xmax'] == row['xmin'] or row['ymax'] == row['ymin']:
@@ -234,7 +234,7 @@ if __name__ == '__main__':
     path_od_csv = '/tf/ship_detect_tl/data_parsing/CSV/train_ship_segmentations_OD.csv'
     path_new_od_csv = '/tf/test/augmented_data_OD.csv'
 
-    augment(img_l, img_dir, img_saving_dir, mask_dir, mask_saving_dir, path_od_csv, path_new_od_csv)
+    #  augment(img_l, img_dir, img_saving_dir, mask_dir, mask_saving_dir, path_od_csv, path_new_od_csv)
 
 
 
