@@ -2,17 +2,17 @@
 
 ## Libraries
 
-* [Albumentations](#https://github.com/albumentations-team/albumentations)
+* [Albumentations](https://github.com/albumentations-team/albumentations)
 
-* [Segmentation Models](#https://github.com/qubvel/segmentation_models)
+* [Segmentation Models](https://github.com/qubvel/segmentation_models)
 
 ## General information
 
-* [Limits to visual representational correspondence between convolutional neural networks and the human brain](#https://www.nature.com/articles/s41467-021-22244-7#Sec7)
+* [Limits to visual representational correspondence between convolutional neural networks and the human brain](https://www.nature.com/articles/s41467-021-22244-7#Sec7)
 
-* [An Evaluation of Deep Learning Methods for Small Object Detection](#https://www.hindawi.com/journals/jece/2020/3189691/)
+* [An Evaluation of Deep Learning Methods for Small Object Detection](https://www.hindawi.com/journals/jece/2020/3189691/)
 
-* [Review of deep learning: concepts, CNN architectures, challenges, applications, future directions](#https://www.researchgate.net/publication/350527503_Review_of_deep_learning_concepts_CNN_architectures_challenges_applications_future_directions)
+* [Review of deep learning: concepts, CNN architectures, challenges, applications, future directions](https://www.researchgate.net/publication/350527503_Review_of_deep_learning_concepts_CNN_architectures_challenges_applications_future_directions)
 
 * [Resources for performing deep learning on satellite imagery](https://github.com/robmarkcole/satellite-image-deep-learning#object-detection-enhanced-by-super-resolution)
 
