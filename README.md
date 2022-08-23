@@ -10,7 +10,8 @@
 ## General info
 
 This project deals with the detection of ships on satellite images by deep learning. \
-The dataset used is the one provided in 2018 by Airbus during a [Kaggle ship setection competition](https://www.kaggle.com/c/airbus-ship-detection). 
+The dataset used is the one provided in 2018 by Airbus during a [Kaggle ship setection competition](https://www.kaggle.com/c/airbus-ship-detection).\
+This project was done as part of a 5 months internship at the French Naval Academy Research Institute.
 
 ## Folder structure 
     .
