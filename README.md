@@ -17,9 +17,9 @@ The dataset used is the one provided in 2018 by Airbus during a [Kaggle ship set
     ├── data                    # Various files (fonts, etc.) 
     ├── data_augmentation       # Data augmentation scripts 
     ├── data_parsing            # Data parsing scripts, CSV and pickle files
-    ├── img_segmentation        # Image Segmentation approach
+    ├── img_segmentation        # Image segmentation approach
     ├── masks                   # Scripts to generate binary masks for image segmentation 
-    ├── object_detection        # 
+    ├── object_detection        # Object detection approach
     ├── tools                   # Tools and utilities
     ├── tutorials               # Tutorials 
     └── README.md
