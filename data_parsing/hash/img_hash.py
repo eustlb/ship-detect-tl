@@ -111,28 +111,6 @@ def imgs_per_b_csv(path_hash_csv, path_new_csv):
     df = pd.DataFrame.from_dict(boats_h_dict)
     pd.DataFrame.to_csv(df, path_new_csv)
 
-def find_cluster(boat_h, cluster, known_boats, df_hash):
-    """
-    Renvoie la liste d'images qui forme le cluster composé en partant d'un boat_h.
-    Utilisé de façon récursive. Les listes de départ cluster et know_boats doivent être vides au premier appel de la fonction.
-    Principe :
-    Lorsque appelée sur un certain boat_h, elle ajoute au cluster toutes les images qui contiennent ce bateau et qui ne sont pas encore dans le cluster.
-    Puis pour chacune des images du cluster, on regarde chaque bateau contenu par ces images et on appelle de nouveau notre fonction pour chacun de nos bateau avec les listes ainsi formées.
-    
-    :param boat_h: int, hash du rle normalisé du bateau. Premier bateau à partir duquel va être construit le cluster.
-    :param cluster: list, liste images présentes dans un même cluster. Est d'abord vide au premier appel de la fonction.
-    :param known_boats: list, liste des bateaux (hash) connus comme étant dans ce cluster.
-    :param df_hash: dataframe tiré du CSV construit par la fonction hash_boats_rle.
-    :return cluster: list, liste des images (noms) présentes dans un même cluster construit à partir du premier bateau.
-    """
-    known_boats.append(boat_h)
-    cluster += [img for img in df_hash[df_hash.BoatHash == boat_h]['ImageId'] if img not in cluster]
-    for img_name in cluster:
-        for boat_h in [boat_h for boat_h in df_hash[df_hash.ImageId == img_name]['BoatHash']]:
-            if boat_h not in known_boats:
-                find_cluster(boat_h, cluster, known_boats, df_hash)
-    return cluster
-
 def find_clusters(path_csv):
     """
     Renvoie les clusters formés en traitant le problème comme un problème réseau.

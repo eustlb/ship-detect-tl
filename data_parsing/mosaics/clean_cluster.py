@@ -82,15 +82,6 @@ if __name__=='__main__':
     # data_label = pd.read_csv('/tf/ship_data/train_ship_segmentations_v2.csv')
     # imgs_w_boats = data_label[data_label.EncodedPixels == data_label.EncodedPixels]['ImageId'].unique()
 
-    # i = 0
-    # for cluster in clusters :
-    #     for 
-
-
-
-
-
-
     # data_label = pd.read_csv('/tf/ship_data/train_ship_segmentations_v2.csv')
     # imgs_w_boats = data_label[data_label.EncodedPixels == data_label.EncodedPixels]['ImageId'].unique()
     # for cluster in tqdm(clusters):

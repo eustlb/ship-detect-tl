@@ -71,8 +71,10 @@ def create_tf_example(file_name, imgs_dir, labels_df):
 
 def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, imgs_dir, cut_rate, boat_rate, tfrecord_dir, only_one = True):
     """
-    Génère deux fichiers au format tfrecord dans le répertoire tfrecord_dir : deux fichiers train et test 
-    nommés selon train_80_70.tfrecord pour 1000 images, dont 80% d'images avec bateau réparties à 70% dans train (et donc 30% dans test).
+    Génère deux fichiers au format tfrecord dans un dossier créé dans le répertoire tfrecord_dir: 
+    deux fichiers train et test nommés selon train_70_80.tfrecord pour 70% d'images avec bateau réparties 80% dans train, le reste dans test.
+    Génère également un fichier "metadata.txt" avec des informations concernant les base crées, 
+    les CSV des images présentes dans train et test au format pascal VOC ainsi que les distribution de tailles de nos deux bases.
     
     :param path_od_csv: str, chemin du csv au format pascal VOC
     :param path_h_csv: str, chemin du csv des hash des bateaux
@@ -80,7 +82,7 @@ def generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, imgs_dir, cut_
     :param imgs_dir: str, répertoire où sont les images.
     :param cut_rate: float, pourcentage d'images utilisées pour former le tfrecord train. Le tfrecord test sera formé avec les images restantes.
     :param boat_rate: float, pourcentage du nombre total d'images qui doit contenir au moins un bateau
-    :param tfrecord_dir: str, répertoire où seront créés les tf records
+    :param tfrecord_dir: str, répertoire où sera créé le dossier qui contiendra nos fichiers.
     :param only_one: bool, default True pour ne sélectionner qu'une seule des images représentant un bateau.
     :return: Void
     """
@@ -306,12 +308,12 @@ if __name__ == "__main__" :
     tfrecord_dir = '/tf/ship_data/annotations' # répertoire où train et test seront créés
     # generate_tf_record(path_od_csv, path_h_csv, path_cluster_csv, imgs_dir, cut_rate, boat_rate, tfrecord_dir)
 
-    # création du tf_record de la base augmentée.
+    ## création du tf_record de la base augmentée.
     path_train_csv = '/tf/ship_data/annotations/70_80/train_70_80.csv'
     path_aug_csv = '/tf/ship_data/augmented_data/augmented_data_OD.csv'
     imgs_dir = '/tf/ship_data/train_v2'
     imgs_dir_aug = '/tf/ship_data/augmented_data/imgs'
     tf_record_name = 'train_aug_70_80.tfrecord'
     tf_record_dir = '/tf/ship_data/annotations/70_80'
-    generate_tf_record_augmented(path_train_csv, path_aug_csv, imgs_dir, imgs_dir_aug, tf_record_name, tf_record_dir)
+    # generate_tf_record_augmented(path_train_csv, path_aug_csv, imgs_dir, imgs_dir_aug, tf_record_name, tf_record_dir)
     

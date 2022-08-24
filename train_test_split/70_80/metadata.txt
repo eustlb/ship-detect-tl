@@ -1,0 +1,4 @@
+Chaque bateau n'est réprésenté que par une image tirée aléatoirement.
+Taux de répartion des bateaux entre train et test : 0.8134907058957692
+Taux d'images avec bateau (train, test): 0.7, 0.7
+Nombre d'images total : 17940 (train : 14220, test : 5208)
