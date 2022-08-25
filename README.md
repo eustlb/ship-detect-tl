@@ -27,7 +27,7 @@ This project was done as part of a 5 months internship at the French Naval Acade
 
 ### 1. data_parsing
 
-> Same boats appear on different images (see...). These duplicates are a big issue for the train/val split. This folder contains scripts and CSVs to deal with this problem and insure a train/val split without boats appearing in both datasets.
+> Same boats appear on different images (see technical_report.pdf section 1.4). These duplicates are a big issue for the train/val split. This folder contains scripts and CSVs to deal with this problem and insure a train/val split without boats appearing in both datasets.
 
     .
     ├── ...
@@ -43,17 +43,15 @@ Module and notebook to run data augmentation. The [albumentations](https://githu
 
 ### 3. object_detection 
 
-#### Setup 
+#### Setup  
 
-> It is necessary to first make sure that Cuda is installed, so as tensorflow and the object detection API ([tensorflow model garden](https://github.com/tensorflow/models)). Nevertheless, it is simplier to create a Docker image with all the dependencies installed and ready to work. See tutorial in the tutorial folder. 
-
-Here you will find everything you need to train and evaluate the models (bboxes) of the [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md).\
+> Here you will find everything you need to train and evaluate the models (bboxes) of the [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md).\
 The different steps are described in the notebook main.ipynb :
 
 
 ### 4. tools
 
-> Here you will find tools to explore the dataset so as to run predictions with trained models on images.
+> This folder contains tools to explore the dataset so as to run predictions with trained models on images.
 
     .
     ├── ...
@@ -65,5 +63,14 @@ The different steps are described in the notebook main.ipynb :
 ### 5. masks & image_segmentation
 
 ...
+
+## Installation
+
+It is necessary to first make sure that Cuda is installed, so as tensorflow and the object detection API ([tensorflow model garden](https://github.com/tensorflow/models)). Nevertheless, it is simplier to create a Docker image with all the dependencies installed and ready to work. See tutorial in the tutorial folder.
+
+
+
+
+
 
 ## A few results
