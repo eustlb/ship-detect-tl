@@ -18,6 +18,7 @@ This project was done as part of a 5 months internship at the French Naval Acade
     ├── data                    # Various files (fonts, etc.) 
     ├── data_augmentation       # Data augmentation scripts 
     ├── data_parsing            # Data parsing scripts, CSV and pickle files
+    ├── docs                    # Ducumentation: bibliography, report and tutorials
     ├── img_segmentation        # Image segmentation approach
     ├── masks                   # Scripts to generate binary masks for image segmentation 
     ├── object_detection        # Object detection approach
