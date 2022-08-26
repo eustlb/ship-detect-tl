@@ -67,11 +67,30 @@ The different steps are described in the notebook main.ipynb :
 
 ## Installation
 
-It is necessary to first make sure that Cuda is installed, so as tensorflow and the object detection API ([tensorflow model garden](https://github.com/tensorflow/models)). Nevertheless, it is simplier to create a Docker image with all the dependencies installed and ready to work. See tutorial in the tutorial folder.
+### Data
 
+All the images and CSVs required can be directly downloaded on [Kaggle website](https://www.kaggle.com/competitions/airbus-ship-detection/data).
 
+### Environment
 
+It is necessary to first make sure that Cuda is installed, so as tensorflow and the object detection API ([tensorflow model garden](https://github.com/tensorflow/models)). Nevertheless, it is simplier to create a Docker image with all the dependencies installed and ready to work. See tuto_container_tf_od.pdf in docs folder.
 
+Once inside the container, simply clone this git repository.
 
+It is highly recommended to access the container through VS Code and its remote explorer extension.
+
+Moreover, tools such as tmux to open terminals in the container and nvtop to monitor GPUs can also be really useful
+
+### Object detection
+
+In the object detection folder (object_detection), follow the steps as described in the notebook main.ipynb. Don't forget to configure the image directory. 
+These steps are :
+- create the train and test tfrecords
+- pick a model on [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md) and download it.
+- configure the hyperparameters of the model (namely the .config file of the model)
+- change the scales and aspect ratios of the anchor generator in the .config file of the models with the values given in the notebook. These values were computed by clustering thanks to the notebook /tools/explore_data/EDA_of_bbox.ipynb
+- configure CUDA_VISIBLE_DEVICES env variable (in the container) if you want to run multiple GPU training in container terminals
+- generate commands for training and validation
+- paste theses command in container terminals (where CUDA_VISIBLE_DEVICES env variable was first set).
 
 ## A few results
