@@ -82,14 +82,14 @@ def predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_d
         bboxs = []
         scores = []
 
-        while detections['detection_scores'][i] >= thresh:
-            scores.append(detections['detection_scores'][i])
-            bboxs.append(detections['detection_boxes'][i])
-            i+=1
-        # save the new image with the predictions using these lists
+        for i in range(len(detections['detection_scores'])):
+            if detections['detection_scores'][i] >= thresh:
+                scores.append(detections['detection_scores'][i])
+                bboxs.append(detections['detection_boxes'][i])
+
+            # save the new image with the predictions using these lists
         new_img_name = img_name[:img_name.index('.')]+'.png' # png format for higher quality
-        if len(bboxs)!=0:
-            save_image_bbox(img_path, os.path.join(saving_dir, new_img_name),bboxs,scores)
+        save_image_bbox(img_path, os.path.join(saving_dir, new_img_name),bboxs,scores)
 
 def predict2(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir):
     """
@@ -153,7 +153,7 @@ def predict2(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_
 
 def extract_im_video(video_path, saving_dir, nb_images):
     vidcap = cv2.VideoCapture(video_path)
-    vidcap.set(cv2.CAP_PROP_POS_MSEC, 180000)      # just cue to 20 sec. position
+    vidcap.set(cv2.CAP_PROP_POS_MSEC, 0)      # just cue to 20 sec. position
     success,image = vidcap.read()
     count = 0
     while count<nb_images:
@@ -165,7 +165,7 @@ def adapt_frames(origin_frames_dir, saving_dir):
     print('Modification des images')
     for im in tqdm(os.listdir(origin_frames_dir)):
         image = Image.open(os.path.join(origin_frames_dir,im))
-        image = image.crop((420,0,1500,1080))
+        image = image.crop((0,0,1080,1080))
         # image = image.resize((768,768))
         image.save(os.path.join(saving_dir,'crop_'+im))
 
@@ -176,25 +176,25 @@ def create_video(video_dir, saving_dir):
     clip.write_videofile(os.path.join(saving_dir,"video.mp4"))
 
 if __name__ == '__main__':
-    video_path = '/tf/ship_data/archives/video/images_drone_brise_lame/vol_drone.MP4'
+    video_path = '/tf/ship_data/vol_drone.MP4'
     saving_dir = '/tf/video'
-    nb_images = 3600
-    # extract_im_video(video_path,saving_dir,nb_images)
+    nb_images = 10170
+    extract_im_video(video_path,saving_dir,nb_images)
 
     origin_frames_dir = '/tf/video'
     saving_dir = '/tf/video_crop'
-    # adapt_frames(origin_frames_dir, saving_dir)
+    adapt_frames(origin_frames_dir, saving_dir)
 
-    checkpoint_path = '/tf/custom_models/faster_rcnn_resnet101_v1_1024x1024_coco17_tpu-8/checkpoint/ckpt-26'
-    pipeline_path = '/tf/custom_models/faster_rcnn_resnet101_v1_1024x1024_coco17_tpu-8/pipeline.config'
+    checkpoint_path = '/tf/ship_data/custom_models/faster_rcnn_resnet101_1024_2/checkpoint/ckpt-26'
+    pipeline_path = '/tf/ship_data/custom_models/faster_rcnn_resnet101_1024_2/pipeline.config'
     img_dir = '/tf/video_crop'
     img_names = os.listdir(img_dir)
     thresh = 0.5
     saving_dir = '/tf/video_predi'
-    # predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir)
+    predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir)
 
     video_dir = '/tf/video_predi'
-    saving_dir = '/tf/tests'
+    saving_dir = '/tf'
     create_video(video_dir,saving_dir)
 
     

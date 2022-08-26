@@ -1,4 +1,5 @@
 import os
+
 import cv2 
 import tensorflow as tf
 import numpy as np
@@ -77,23 +78,29 @@ def predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_d
         bboxs = []
         scores = []
 
-        while detections['detection_scores'][i] >= thresh:
-            scores.append(detections['detection_scores'][i])
-            bboxs.append(detections['detection_boxes'][i])
-            i+=1
-        # save the new image with the predictions using these lists
+        for i in range(len(detections['detection_scores'])):
+            if detections['detection_scores'][i] >= thresh:
+                scores.append(detections['detection_scores'][i])
+                bboxs.append(detections['detection_boxes'][i])
+
+            # save the new image with the predictions using these lists
         new_img_name = img_name[:img_name.index('.')]+'.png' # png format for higher quality
-        if len(bboxs)!=0:
-            save_image_bbox(img_path, os.path.join(saving_dir, new_img_name),bboxs,scores)
+    
+        save_image_bbox(img_path, os.path.join(saving_dir, new_img_name),bboxs,scores)
                
 if __name__ == '__main__':
-    checkpoint_path = '/tf/ship_data/custom_models/faster_rcnn_resnet152_1024_1/checkpoint/ckpt-120'
-    pipeline_path = '/tf/ship_data/custom_models/faster_rcnn_resnet152_1024_1/pipeline.config'
-    img_dir = '/tf/ship_data/train_v2/'
-    # img_dir = '/tf/ship_data/test_v2/'
-    # img_names = os.listdir('/tf/ship_data/test_v2')[:1000]
-    df = pd.read_csv('/tf/ship_data/annotations/100_80_90/test_100_80_90.csv')
-    img_names = df[df.xmax == df.xmax]['filename'].unique()[:100] # dataframe des images avec bateau
+    checkpoint_path = '/tf/ship_data/custom_models/faster_rcnn_resnet101_1024_2/checkpoint/ckpt-26'
+    pipeline_path = '/tf/ship_data/custom_models/faster_rcnn_resnet101_1024_2/pipeline.config'
+    # img_dir = '/tf/video_crop'
+    img_dir = '/tf/ship_data/train_v2'
+    
+    df = pd.read_csv('/tf/ship_data/train_ship_segmentations_OD.csv')
+    img_names = df[df.xmax == df.xmax]['filename'].unique()[:500]
     thresh = 0.5
-    saving_dir = '/tf/predictions'
+    saving_dir = '/tf/video_predi'
     predict(checkpoint_path, pipeline_path, img_dir, img_names, thresh, saving_dir)
+
+    # from moviepy.editor import ImageSequenceClip
+    # files = [os.path.join(saving_dir,vid_name) for vid_name in os.listdir(video_dir)]
+    # clip = ImageSequenceClip(files, fps = 30) 
+    # clip.write_videofile(os.path.join(saving_dir,"video.mp4"))
