@@ -79,7 +79,7 @@ Once inside the container, simply clone this git repository.
 
 It is highly recommended to access the container through VS Code and its remote explorer extension.
 
-Moreover, tools such as tmux to open terminals in the container and nvtop to monitor GPUs can also be really useful
+Moreover, tools such as tmux to open terminals in the container and nvtop to monitor GPUs can also be really useful.
 
 ### Object detection
 
