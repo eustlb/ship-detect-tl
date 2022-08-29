@@ -1,6 +1,8 @@
 # Ship Detection On Satellite Images
 
-![](/docs/pred_example.png)
+<p align="center">
+  <img width="768" height="768" src=./docs/pred_example.png>
+</p>
 
 ## Table of content
 
