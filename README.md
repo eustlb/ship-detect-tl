@@ -1,5 +1,7 @@
 # Ship Detection On Satellite Images
 
+![](/docs/pred_example.png)
+
 ## Table of content
 
 * [General info](#general-info)
@@ -85,12 +87,15 @@ Moreover, tools such as tmux to open terminals in the container and nvtop to mon
 
 In the object detection folder (object_detection), follow the steps as described in the notebook main.ipynb. Don't forget to configure the image directory. 
 These steps are :
+In the object detection folder (object_detection), follow the steps as described in the notebook main.ipynb. Don't forget to configure the image directory. 
+These steps are :
 - create the train and test tfrecords
-- pick a model on [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md) and download it.
+- pick a model on [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md) and download it
 - configure the hyperparameters of the model (namely the .config file of the model)
 - change the scales and aspect ratios of the anchor generator in the .config file of the models with the values given in the notebook. These values were computed by clustering thanks to the notebook /tools/explore_data/EDA_of_bbox.ipynb
-- configure CUDA_VISIBLE_DEVICES env variable (in the container) if you want to run multiple GPU training in container terminals
+- configure CUDA_VISIBLE_DEVICES env variable (in container terminals) if you want to run multiple GPU training.
 - generate commands for training and validation
 - paste theses command in container terminals (where CUDA_VISIBLE_DEVICES env variable was first set).
+- run tensorboard to check results
 
 ## A few results
