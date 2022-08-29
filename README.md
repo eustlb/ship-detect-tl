@@ -15,7 +15,8 @@
 
 This project deals with the detection of ships on satellite images by deep learning. \
 The dataset used is the one provided in 2018 by Airbus during a [Kaggle ship setection competition](https://www.kaggle.com/c/airbus-ship-detection).\
-This project was done as part of a 5 months internship at the French Naval Academy Research Institute.
+This project was done as part of a 5 months internship at the French Naval Academy Research Institute. \
+The dataset is made of 192556 annotated images, with only 42556 containing at least one boat.  
 
 ## Folder structure 
     .
@@ -101,3 +102,19 @@ These steps are :
 - run tensorboard to check results
 
 ## A few results
+
+Here are a few interesting results. The idea was to verify empirically some of the conclusions found when reading papers. 
+All the models were trained during 25k steps over six GPUs, with a batch size of 48 (synchronous distributed training, tensorflow MirroredStrategy). 
+They all used momentum optimizer with a coefficient of momentum of 0.9 and cosine decay learning rate schedule, with base value of 0.04, 500 warmup steps for a total of 25k steps.
+When transfer learning was used, the pretrained weights were those obtained after training on COCO, initialized from Imagenet classification checkpoint and during trainging no layer were freezed.
+
+### Interests of transfer learning 
+
+
+
+### Data augmentation vs. deeper network
+
+>"Clearly we see that changing augmentation can be as, if not more,
+powerful than changing around the underlying architectural components." ([Learning Data Augmentation Strategies for Object Detection](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123720562.pdf))
+
+Here are displayed the mAP curves obtained for a faster RCNN model using ResNet50 

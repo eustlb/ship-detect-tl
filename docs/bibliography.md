@@ -100,4 +100,7 @@ computationally expensive and time consuming”
 
 * [Augmentation for small object detection (paper)](https://arxiv.org/pdf/1902.07296.pdf)
 
-* [Learning Data Augmentation Strategies for Object Detection](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123720562.pdf)
+* [Learning Data Augmentation Strategies for Object Detection](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123720562.pdf) \
+**Notes:** \
+"Clearly we see that changing augmentation can be as, if not more,
+powerful than changing around the underlying architectural components."
