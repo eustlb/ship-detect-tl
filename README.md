@@ -18,7 +18,7 @@
 This project deals with the detection of ships on satellite images by deep learning. \
 The dataset used is the one provided in 2018 by Airbus during a [Kaggle ship setection competition](https://www.kaggle.com/c/airbus-ship-detection).\
 This project was done as part of a 5 months internship at the French Naval Academy Research Institute. \
-The dataset is made of 192556 annotated images, with only 42556 containing at least one boat (see ship_detect_tl/tools/explore_data/data_info.ipynb).
+The dataset is made of 192556 annotated images, with only 42556 containing at least one boat (see tools/explore_data/data_info.ipynb).
 
 ## Folder structure 
     .
@@ -35,14 +35,14 @@ The dataset is made of 192556 annotated images, with only 42556 containing at le
 
 ### 1. data_parsing
 
-> Same boats appear on different images (see ./docs/technical_report.pdf section 1.4). These duplicates are a big issue for the train/val split. This folder contains scripts and CSVs to deal with this problem and insure a train/val split without boats appearing in both datasets. This represents a significant part of the work done and is described in the report ./docs/technical_report.pdf. 
+> Same boats appear on different images (see docs/technical_report.pdf section 1.4). These duplicates are a big issue for the train/val split. This folder contains scripts and CSVs to deal with this problem and insure a train/val split without boats appearing in both datasets. This represents a significant part of the work done and is described in the report docs/technical_report.pdf. 
 
     .
     ├── ...
     ├── data_parsing            
     │   ├── CSV                 # CSV files explained in description.md (in the CSV folder)
-    │   ├── hash                # Hash approach (./docs/technical_report.pdf sect. 2.1-2.2)
-    │   └── mosaics             # Mosaic approach (./docs/technical_report.pdf sect. 2.4)
+    │   ├── hash                # Hash approach (docs/technical_report.pdf sect. 2.1-2.2)
+    │   └── mosaics             # Mosaic approach (docs/technical_report.pdf sect. 2.4)
     └── ...
 
 ### 2. data_augmentation
@@ -55,7 +55,7 @@ Here is a distrbution of the sizes (bounding boxes) of the boats contained in th
 #### Setup  
 
 Here you will find everything you need to train and evaluate the models (bboxes) of the [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md).\
-The different steps are described in the notebook ./object_detection/main.ipynp.
+The different steps are described in the notebook object_detection/main.ipynp.
 
 
 ### 4. tools
@@ -98,7 +98,7 @@ These steps are :
 - create the train and test tfrecords
 - pick a model on [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md) and download it
 - configure the hyperparameters of the model (namely the .config file of the model)
-- change the scales and aspect ratios of the anchor generator in the .config file of the models with the values given in the notebook. These values were computed by clustering thanks to the notebook /tools/explore_data/EDA_of_bbox.ipynb
+- change the scales and aspect ratios of the anchor generator in the .config file of the models with the values given in the notebook. These values were computed by clustering thanks to the notebook tools/explore_data/EDA_of_bbox.ipynb
 - configure CUDA_VISIBLE_DEVICES env variable (in container terminals) if you want to run multiple GPU training.
 - generate commands for training and validation
 - paste theses command in container terminals (where CUDA_VISIBLE_DEVICES env variable was first set).
