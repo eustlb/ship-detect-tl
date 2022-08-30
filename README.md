@@ -8,7 +8,9 @@
 
 * [General info](#general-info)
 * [Folder structure](#folder-structure)
-* [Setup](#setup)
+* [Installation](#installation)
+* [Results](#results)
+* [Generalisation](#generalisation)
 
 
 ## General info
@@ -33,14 +35,14 @@ The dataset is made of 192556 annotated images, with only 42556 containing at le
 
 ### 1. data_parsing
 
-> Same boats appear on different images (see technical_report.pdf section 1.4). These duplicates are a big issue for the train/val split. This folder contains scripts and CSVs to deal with this problem and insure a train/val split without boats appearing in both datasets. This represents a significant part of the work done.
+> Same boats appear on different images (see ./docs/technical_report.pdf section 1.4). These duplicates are a big issue for the train/val split. This folder contains scripts and CSVs to deal with this problem and insure a train/val split without boats appearing in both datasets. This represents a significant part of the work done and is described in the report ./docs/technical_report.pdf. 
 
     .
     ├── ...
     ├── data_parsing            
     │   ├── CSV                 # CSV files explained in description.md (in the CSV folder)
-    │   ├── hash                # Scripts implementing the hash approach (see...)
-    │   └── mosaics             # Scripts implementing the mosaic approach (see...)
+    │   ├── hash                # Hash approach (./docs/technical_report.pdf sect. 2.1-2.2)
+    │   └── mosaics             # Mosaic approach (./docs/technical_report.pdf sect. 2.4)
     └── ...
 
 ### 2. data_augmentation
@@ -102,19 +104,19 @@ These steps are :
 - paste theses command in container terminals (where CUDA_VISIBLE_DEVICES env variable was first set).
 - run tensorboard to check results
 
-## A few results
+## Results
 
 Here are a few interesting results. The idea was to verify empirically some of the conclusions found when reading papers. 
 All the models were trained during 25k steps over six GPUs, with a batch size of 48 (synchronous distributed training, tensorflow MirroredStrategy). 
 They all used momentum optimizer with a coefficient of momentum of 0.9 and cosine decay learning rate schedule, with base value of 0.04, 500 warmup steps for a total of 25k steps.
-When transfer learning was used, the pretrained weights were those obtained after training on COCO, initialized from Imagenet classification checkpoint and during trainging no layer were freezed. 
+When transfer learning was used, the pretrained weights were those obtained after training on COCO, initialized from Imagenet classification checkpoint and during trainging no layers were freezed. 
 
-### Interests of transfer learning 
+### Benefits of transfer learning 
 
-As mentionned above, models were first trained on COCO dataset (and even before ImageNet dataset). Nevertheless, one might think that these datasets as so different from Kaggle's one that transfer learning may not be really useful. Indeed, COCO dataset is composed of 91 categories, of which only the boat one is interesting here. Moreover, objects in this dataset come with many angles and are quite big on the images while in our dataset, the angle is always vertical (satellite view) and boats quite small (a majority of around 20 pixels wide which represent only around 3% of the image width). 
+As mentionned above, models were first trained on COCO dataset (and even before ImageNet dataset). Nevertheless, one might think that these datasets are so different from Kaggle's one that transfer learning may not be really useful. Indeed, COCO dataset is composed of 91 categories, of which only the boat one is interesting here and objects in this dataset come with many angles while in our dataset, the angle is always vertical (satellite view) and boats quite small (a majority of around 20 pixels wide which represent only around 3% of the image width). But, between starting from random initialized weights and starting for pretrained ones, one would at first glance have nothing to loose by choosing the transfer learning option.
 
 The main improvement to be expected is in detecting "small object". A "small object", according to the precision metric, is an object with a max rectangle area of 32x32 pixels. 
-[Stastitics on COCO dataset](https://arxiv.org/pdf/1902.07296v1.pdf) (see table 2 in the article) show that the majority (more thant 40%) of the objects are small. For the train dataset we used (see train\_test\_split/70\_80), more than 50% of the boats have a max rectangle area below 27x27 pixels. For this reason, we can expect that knowledge learned, particularly by the feature extractor (here ResNet50), will have the stronger impact for detecting small object.
+[Stastitics on COCO dataset](https://arxiv.org/pdf/1902.07296v1.pdf) (see table 2 in the article) show that the majority (more thant 40%) of the objects are small. For the train dataset we used (see train\_test\_split/70\_80), more than 50% of the boats have a max rectangle area below 27x27 pixels. For this reason, we can expect that knowledge learned, particularly by the feature extractor (here ResNet50), will have a greater impact in detecting small object.
 
 <p align="center">
   <img width="600" height="400" src=./docs/figures/mAP.png>
@@ -133,7 +135,21 @@ The above graph empirically demonstrates a well-known result : transfer learning
 We can see small object detection training is the one that has been accelerated the most, with an accuracy after 2k steps : 5 times higher for small boats against 1.9 times higher for large boats and 2 times higher for medium boats.
 
 
-### Data augmentation vs. deeper network
+### Data augmentation vs. Deeper network
 
 >"Clearly we see that changing augmentation can be as, if not more,
 powerful than changing around the underlying architectural components." ([Learning Data Augmentation Strategies for Object Detection](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123720562.pdf))
+
+Here we are going to change de ResNet50 backbone for a deeper one: ResNet101.
+Verifying the last assertion is difficult as we decided to train both models for the same numbers of steps while the deeper one may have needed some more steps for its precision metric to reach its top. Likewise, we used exactly the same hyperparameters knowing that other parameters could have led to better results. Moreover, such results really depend on the data augmentation strategy. In our case, the strategy that has been choosen is inspired by the one used in the paper but we need to keep in mind that in this paper, they use AutoAugment which may have led to a more optimal strategy. 
+
+<p align="center">
+  <img width="600" height="400" src=./docs/figures/aug_mAP.png>
+</p>
+
+We can see that in both case our data augmentation strategy led to an improvement of about 2% mAP while changing the backbone for a deeper one led to an improvement of about 5% mAP.
+
+
+## Generalisation
+
+The generalizability of our trained model (Faster R-CNN, ResNet101 bakckbone, data augmentation - around 56% mAP) has been tested on a drone footage of a marina. Knowing that the training base is pretty different from such images, where the seagulls look more like the boats of our training data.
