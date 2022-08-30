@@ -54,8 +54,8 @@ Here is a distrbution of the sizes (bounding boxes) of the boats contained in th
 
 #### Setup  
 
-> Here you will find everything you need to train and evaluate the models (bboxes) of the [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md).\
-The different steps are described in the notebook main.ipynb :
+Here you will find everything you need to train and evaluate the models (bboxes) of the [tensorflow model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md).\
+The different steps are described in the notebook ./object_detection/main.ipynp.
 
 
 ### 4. tools
