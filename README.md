@@ -151,6 +151,6 @@ We can see that, in both case, our data augmentation strategy led to an improvem
 
 ## Generalisation
 
-The generalizability of our trained model (Faster R-CNN, ResNet101 backbone, data augmentation - around 56% mAP) has been tested on drone marina footage. Knowing that the training base is pretty different from such images, where the seagulls look more like the boats of our training data, our model seems to have a good generalization capacity
+The generalizability of our trained model (Faster R-CNN, ResNet101 backbone, data augmentation - around 56% mAP) has been tested on drone marina footage. Knowing that the training base is pretty different from such images, where the seagulls look more like the boats of our training data, our model seems to have a good generalization capacity (reload page if the video is not working).
 
 https://user-images.githubusercontent.com/94853470/187454349-deeef5d8-f7b0-4909-b02e-26c96eb5aa8b.mp4
