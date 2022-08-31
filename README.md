@@ -92,8 +92,6 @@ Moreover, tools such as Tmux to open terminals in the container and nvtop to mon
 
 In the object detection folder (object_detection), follow the steps as described in the notebook main.ipynb. Don't forget to configure the image directory. 
 These steps are :
-In the object detection folder (object_detection), follow the steps as described in the notebook main.ipynb. Don't forget to configure the image directory. 
-These steps are :
 - create the train and test TFRecords
 - pick a model on [TensorFlow Model Zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md) and download it
 - configure the hyperparameters of the model (namely the .config file of the model)
