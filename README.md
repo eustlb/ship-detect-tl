@@ -103,7 +103,7 @@ These steps are :
 
 ## Results
 
-Here are a few interesting results. The idea was to verify empirically some of the conclusions found when reading papers. 
+Here are a few interesting results. The idea was to verify empirically some of the conclusions found when reading papers (see docs/bibliography.md). 
 All the models were trained during 25k steps over six GPUs, with a batch size of 48 (synchronous distributed training, TensorFlow MirroredStrategy). 
 They all used a momentum optimizer with a coefficient of momentum of 0.9 and a cosine decay learning rate schedule, with a base value of 0.04, 500 warmup steps for a total of 25k steps.
 When transfer learning was used, the pre-trained weights were those obtained after training on COCO, initialized from ImageNet classification checkpoints and during training no layers were frozen. 
