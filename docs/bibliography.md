@@ -1,5 +1,11 @@
 # Bibliography (papers & websites) and resources 
 
+## Conferences 
+
+* [Dmitry Larko, H2O.ai - Kaggle Airbus Ship Detection Challenge - H2O World San Francisco](https://www.youtube.com/watch?v=0Opb8gB1p4w)
+
+* [(Ru) Airbus Ship Detection Challenge, 4th position by Dmitry Danevskyi @ ML #5](https://www.youtube.com/watch?v=pY3HaHFB7yA)
+
 ## Libraries
 
 * [Albumentations](https://github.com/albumentations-team/albumentations)
@@ -104,3 +110,4 @@ computationally expensive and time consuming”
 **Notes:** \
 "Clearly we see that changing augmentation can be as, if not more,
 powerful than changing around the underlying architectural components."
+
