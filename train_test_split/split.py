@@ -155,7 +155,7 @@ def split(path_od_csv, path_h_csv, path_cluster_csv, cut_rate, boat_rate, dir, o
         file.write(f"Toutes les images représentant un bateau sont présentes."+"\n")
     file.write(f"Taux de répartion des bateaux entre train et test : {1-n_boats_test/(n_boats_train+n_boats_test)}"+"\n") 
     file.write(f"Taux d'images avec bateau (train, test): {n_im_boats_train/(n_im_boats_train + n_im_no_boat_train)}, {n_im_boats_test/(n_im_boats_test + n_im_no_boat_test)}"+"\n")
-    file.write(f"Nombre d'images total : {n_im_boats_test+n_im_boats_train+n_im_no_boat_train+n_im_no_boat_test} (train : {n_im_boats_train+n_im_no_boat_train}, test : {n_im_boats_test+n_im_boats_test})")
+    file.write(f"Nombre d'images total : {n_im_boats_test+n_im_boats_train+n_im_no_boat_train+n_im_no_boat_test} (train : {n_im_boats_train+n_im_no_boat_train}, test : {n_im_boats_test+n_im_no_boat_test})")
     file.close()
 
 if __name__ == '__main__':
